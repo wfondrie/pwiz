@@ -11162,4 +11162,7 @@ Invalid peptide sequence at position 18
   <data name="RTScheduleGraphPane_UpdateGraph_Concurrent_Accumulations" xml:space="preserve">
     <value>Concurrent Accumulations</value>
   </data>
+  <data name="DiaUmpireDdaConverter_Run_Starting_DIA_Umpire_conversion" xml:space="preserve">
+    <value>Starting DIA-Umpire conversion</value>
+  </data>
 </root>

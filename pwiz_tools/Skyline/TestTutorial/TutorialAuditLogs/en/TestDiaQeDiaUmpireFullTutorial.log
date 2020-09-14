@@ -1,0 +1,164 @@
+Undo Redo : Transition Settings -- Integration > Integrate All changed to True
+Summary   : Settings > Transition Settings -- Integration > Integrate All changed to True
+All Info  :
+Transition Settings -- Integration > Integrate All changed to True
+Settings > Transition Settings -- Integration > Integrate All changed from False to True
+
+Undo Redo : Added spectral library "DIA-QE-tutorial"
+Summary   : Added spectral library "DIA-QE-tutorial"
+All Info  :
+Added spectral library "DIA-QE-tutorial"
+Build Spectral Library > Cut-off score is "0.95"
+Build Spectral Library > Search files : contains "collinsb_X1803_171-A-diaumpire.mzid"
+Build Spectral Library > Search files : contains "collinsb_X1803_172-B-diaumpire.mzid"
+Build Spectral Library > Search files : contains "collinsb_X1803_173-A-diaumpire.mzid"
+Build Spectral Library > Search files : contains "collinsb_X1803_174-B-diaumpire.mzid"
+Build Spectral Library > Search files : contains "collinsb_X1803_175-A-diaumpire.mzid"
+Build Spectral Library > Search files : contains "collinsb_X1803_176-B-diaumpire.mzid"
+Build Spectral Library > iRT standard peptides is "Biognosys-11 (iRT-C18)"
+Build Spectral Library > Include ambiguous matches is True
+Build Spectral Library > Filter for document peptides is False
+Build Spectral Library > Workflow is "DIA"
+Build Spectral Library > Input File Type is "DIA raw"
+Extra Info: Cut-off score = "0.95",
+Search files = 
+[
+    "collinsb_X1803_171-A-diaumpire.mzid",
+    "collinsb_X1803_172-B-diaumpire.mzid",
+    "collinsb_X1803_173-A-diaumpire.mzid",
+    "collinsb_X1803_174-B-diaumpire.mzid",
+    "collinsb_X1803_175-A-diaumpire.mzid",
+    "collinsb_X1803_176-B-diaumpire.mzid"
+],
+iRT standard peptides = "Biognosys-11 (iRT-C18)",
+Include ambiguous matches = True,
+Filter for document peptides = False,
+Workflow = "DIA",
+Input File Type = "DIA raw"
+
+Undo Redo : Imported a peptide search
+Summary   : Imported a peptide search
+All Info  :
+Imported a peptide search
+Import Peptide Search > Extract Chromatograms > Found results files : contains "collinsb_X1803_171-A.mzML"
+Import Peptide Search > Extract Chromatograms > Found results files : contains "collinsb_X1803_172-B.mzML"
+Import Peptide Search > Extract Chromatograms > Found results files : contains "collinsb_X1803_173-A.mzML"
+Import Peptide Search > Extract Chromatograms > Found results files : contains "collinsb_X1803_174-B.mzML"
+Import Peptide Search > Extract Chromatograms > Found results files : contains "collinsb_X1803_175-A.mzML"
+Import Peptide Search > Extract Chromatograms > Found results files : contains "collinsb_X1803_176-B.mzML"
+Import Peptide Search > Extract Chromatograms > Files to import simultaneously is "Many"
+Import Peptide Search > Extract Chromatograms > Removed prefix is "collinsb_X1803_17"
+Import Peptide Search > Extract Chromatograms > Removed suffix is ".mzML"
+Import Peptide Search > Add Modifications > Added modifications : contains "Carbamidomethyl (C) = C[57] (fixed)"
+Import Peptide Search > Add Modifications > Added modifications : contains "Oxidation (M) = M[16] (variable)"
+Import Peptide Search > Import FASTA > FASTA file is "napedro_3mixed_human_yeast_ecoli_20140403_iRT.fasta"
+Import Peptide Search > Import FASTA > Decoy generation method is "Shuffle Sequence"
+Import Peptide Search > Import FASTA > Decoys per target is "1"
+Import Peptide Search > Import FASTA > Automatically train mProphet model is True
+Extra Info: Extract Chromatograms = 
+{
+    Found results files = 
+    [
+        "collinsb_X1803_171-A.mzML",
+        "collinsb_X1803_172-B.mzML",
+        "collinsb_X1803_173-A.mzML",
+        "collinsb_X1803_174-B.mzML",
+        "collinsb_X1803_175-A.mzML",
+        "collinsb_X1803_176-B.mzML"
+    ],
+    Files to import simultaneously = "Many",
+    Removed prefix = "collinsb_X1803_17",
+    Removed suffix = ".mzML"
+},
+Add Modifications = 
+{
+    Added modifications = 
+    [
+        "Carbamidomethyl (C) = C[57] (fixed)",
+        "Oxidation (M) = M[16] (variable)"
+    ]
+},
+Import FASTA = 
+{
+    FASTA file = "napedro_3mixed_human_yeast_ecoli_20140403_iRT.fasta",
+    Decoy generation method = "Shuffle Sequence",
+    Decoys per target = "1",
+    Automatically train mProphet model = True
+}
+
+Undo Redo : Annotations changed
+Summary   : Settings > Document Settings -- Annotations changed
+All Info  :
+Annotations changed
+Settings > Document Settings -- Annotations : "Condition" was added
+Settings > Document Settings -- Annotations > "Condition" > Applies to is "replicate"
+Settings > Document Settings -- Annotations > "Condition" > Type is "Value List"
+Settings > Document Settings -- Annotations > "Condition" > Values : contains "A"
+Settings > Document Settings -- Annotations > "Condition" > Values : contains "B"
+Settings > Document Settings -- Annotations : "BioReplicate" was added
+Settings > Document Settings -- Annotations > "BioReplicate" > Applies to is "replicate"
+Settings > Document Settings -- Annotations > "BioReplicate" > Type is "Text"
+
+Undo Redo : Pasted 12 values into the document grid
+Summary   : Pasted 12 values into the document grid
+All Info  :
+Pasted 12 values into the document grid
+Document grid > Report name is "Replicates"
+Set Condition of 1-A to "A"
+Set BioReplicate of 1-A to "1"
+Set Condition of 2-B to "B"
+Set BioReplicate of 2-B to "1"
+Set Condition of 3-A to "A"
+Set BioReplicate of 3-A to "2"
+Set Condition of 4-B to "B"
+Set BioReplicate of 4-B to "2"
+Set Condition of 5-A to "A"
+Set BioReplicate of 5-A to "3"
+Set Condition of 6-B to "B"
+Set BioReplicate of 6-B to "3"
+Extra Info: A	1
+B	1
+A	2
+B	2
+A	3
+B	3
+
+Report name = "Replicates"
+
+Undo Redo : Group Comparison : "By Condition" was added
+Summary   : Settings > Document Settings -- Group Comparisons : "By Condition" was added
+All Info  :
+Group Comparison : "By Condition" was added
+Settings > Document Settings -- Group Comparisons : "By Condition" was added
+Settings > Document Settings -- Group Comparisons > "By Condition" > Control group annotation is "Condition"
+Settings > Document Settings -- Group Comparisons > "By Condition" > Control group value is "A"
+Settings > Document Settings -- Group Comparisons > "By Condition" > Value to compare against is "B"
+Settings > Document Settings -- Group Comparisons > "By Condition" > Identity Annotation is "BioReplicate"
+Settings > Document Settings -- Group Comparisons > "By Condition" > Normalization method is "None"
+Settings > Document Settings -- Group Comparisons > "By Condition" > Summary method is "Sum of transition areas"
+Settings > Document Settings -- Group Comparisons > "By Condition" > Confidence level is "95"
+Settings > Document Settings -- Group Comparisons > "By Condition" > Protein scope is False
+Settings > Document Settings -- Group Comparisons > "By Condition" > Use zero for missing peaks is False
+Settings > Document Settings -- Group Comparisons > "By Condition" > Q-value cutoff is "0.01"
+Settings > Document Settings -- Group Comparisons > "By Condition" > Formatting rows is Empty
+
+Undo Redo : Group Comparison > "By Condition" > Formatting rows changed
+Summary   : Settings > Document Settings -- Group Comparisons > "By Condition" > Formatting rows changed
+All Info  :
+Group Comparison > "By Condition" > Formatting rows changed
+Settings > Document Settings -- Group Comparisons > "By Condition" > Formatting rows : { Expression = "ProteinName: ECOLI", Labeled = False, Size = "Normal", Symbol = "Circle", RGB = "128, 0, 255" } was added
+Settings > Document Settings -- Group Comparisons > "By Condition" > Formatting rows : { Expression = "ProteinName: YEAS", Labeled = False, Size = "Normal", Symbol = "Circle", RGB = "255, 128, 0" } was added
+Settings > Document Settings -- Group Comparisons > "By Condition" > Formatting rows : { Expression = "ProteinName: HUMAN", Labeled = False, Size = "Normal", Symbol = "Circle", RGB = "0, 128, 0" } was added
+
+Undo Redo : Group Comparison > "By Condition" > Protein scope changed to True
+Summary   : Settings > Document Settings -- Group Comparisons > "By Condition" > Protein scope changed to True
+All Info  :
+Group Comparison > "By Condition" > Protein scope changed to True
+Settings > Document Settings -- Group Comparisons > "By Condition" > Protein scope changed from False to True
+
+Undo Redo : Group Comparison > "By Condition" > Summary method changed from "Sum of transition areas" to "Turkey's Median Polish"
+Summary   : Settings > Document Settings -- Group Comparisons > "By Condition" > Summary method changed from "Sum of transition areas" to "Turkey's Median Polish"
+All Info  :
+Group Comparison > "By Condition" > Summary method changed from "Sum of transition areas" to "Turkey's Median Polish"
+Settings > Document Settings -- Group Comparisons > "By Condition" > Summary method changed from "Sum of transition areas" to "Turkey's Median Polish"
+

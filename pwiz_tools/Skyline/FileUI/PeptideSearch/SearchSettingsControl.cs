@@ -21,10 +21,12 @@ using System;
 using System.Linq;
 using System.Windows.Forms;
 using pwiz.Common.Chemistry;
+using pwiz.Common.DataBinding;
 using pwiz.Common.SystemUtil;
 using pwiz.Skyline.Alerts;
 using pwiz.Skyline.Controls;
 using pwiz.Skyline.Model;
+using pwiz.Skyline.Model.AuditLog;
 using pwiz.Skyline.Properties;
 using pwiz.Skyline.Util;
 
@@ -43,6 +45,46 @@ namespace pwiz.Skyline.FileUI.PeptideSearch
 
             txtMS1Tolerance.LostFocus += txtMS1Tolerance_LostFocus;
             txtMS2Tolerance.LostFocus += txtMS2Tolerance_LostFocus;
+        }
+
+
+        public DdaSearchSettings SearchSettings
+        {
+            get { return new DdaSearchSettings(this); }
+        }
+
+        public class DdaSearchSettings
+        {
+            public DdaSearchSettings(SearchSettingsControl control) : this(control.PrecursorTolerance,
+                control.FragmentTolerance, control.MaxVariableMods, control.FragmentIons)
+            {
+            }
+
+            public static DdaSearchSettings GetDefault()
+            {
+                return new DdaSearchSettings();
+            }
+
+            public DdaSearchSettings()
+            {
+            }
+
+            public DdaSearchSettings(MzTolerance precursorTolerance, MzTolerance fragmentTolerance, int maxVariableMods, string fragmentIons)
+            {
+                PrecursorTolerance = precursorTolerance;
+                FragmentTolerance = fragmentTolerance;
+                MaxVariableMods = maxVariableMods;
+                FragmentIons = fragmentIons;
+            }
+
+            [Track]
+            public MzTolerance PrecursorTolerance { get; private set; }
+            [Track]
+            public MzTolerance FragmentTolerance { get; private set; }
+            [Track]
+            public int MaxVariableMods { get; private set; }
+            [Track]
+            public string FragmentIons { get; private set; }
         }
 
         private void txtMS1Tolerance_LostFocus(object sender, EventArgs e)
@@ -132,7 +174,7 @@ namespace pwiz.Skyline.FileUI.PeptideSearch
                     Resources.DdaSearch_SearchSettingsControl_MS1_Tolerance_incorrect);
                 return false;
             }
-            ImportPeptideSearch.SearchEngine.SetPrecursorMassTolerance(new MzTolerance(ms1Tol, (MzTolerance.Units) cbMS1TolUnit.SelectedIndex));
+            ImportPeptideSearch.SearchEngine.SetPrecursorMassTolerance(PrecursorTolerance);
 
             double ms2Tol;
             if (!helper.ValidateDecimalTextBox(txtMS2Tolerance, 0, 100, out ms2Tol))
@@ -141,7 +183,7 @@ namespace pwiz.Skyline.FileUI.PeptideSearch
                     Resources.DdaSearch_SearchSettingsControl_MS2_Tolerance_incorrect);
                 return false;
             }
-            ImportPeptideSearch.SearchEngine.SetFragmentIonMassTolerance(new MzTolerance(ms2Tol, (MzTolerance.Units) cbMS2TolUnit.SelectedIndex));
+            ImportPeptideSearch.SearchEngine.SetFragmentIonMassTolerance(FragmentTolerance);
 
             string fragmentIons;
             if (!ValidateCombobox(cbFragmentIons, out fragmentIons))
@@ -154,26 +196,45 @@ namespace pwiz.Skyline.FileUI.PeptideSearch
             return true;
         }
 
-        public void SetPrecursorTolerance(MzTolerance tolerance)
+        public MzTolerance PrecursorTolerance
         {
-            txtMS1Tolerance.Text = tolerance.Value.ToString(LocalizationHelper.CurrentCulture);
-            cbMS1TolUnit.SelectedIndex = (int) tolerance.Unit;
-            ImportPeptideSearch.SearchEngine.SetPrecursorMassTolerance(tolerance);
+            get { return new MzTolerance(double.Parse(txtMS1Tolerance.Text), (MzTolerance.Units) cbMS1TolUnit.SelectedIndex); }
+
+            set
+            {
+                txtMS1Tolerance.Text = value.Value.ToString(LocalizationHelper.CurrentCulture);
+                cbMS1TolUnit.SelectedIndex = (int)value.Unit;
+            }
         }
 
-        public void SetFragmentTolerance(MzTolerance tolerance)
+        public MzTolerance FragmentTolerance
         {
-            txtMS2Tolerance.Text = tolerance.Value.ToString(LocalizationHelper.CurrentCulture);
-            cbMS2TolUnit.SelectedIndex = (int) tolerance.Unit;
-            ImportPeptideSearch.SearchEngine.SetFragmentIonMassTolerance(tolerance);
+            get { return new MzTolerance(double.Parse(txtMS2Tolerance.Text), (MzTolerance.Units) cbMS2TolUnit.SelectedIndex); }
+
+            set
+            {
+                txtMS2Tolerance.Text = value.Value.ToString(LocalizationHelper.CurrentCulture);
+                cbMS2TolUnit.SelectedIndex = (int)value.Unit;
+            }
         }
 
-        public void SetFragmentIons(string fragmentIons)
+        public int MaxVariableMods
         {
-            int i = cbFragmentIons.Items.IndexOf(fragmentIons);
-            Assume.IsTrue(i >= 0, Resources.DdaSearch_SearchSettingsControl_Fragmentions_not_found_in_combobox); 
-            cbFragmentIons.SelectedIndex = i;
-            ImportPeptideSearch.SearchEngine.SetFragmentIons(fragmentIons);
+            get { return Convert.ToInt32(cbMaxVariableMods.SelectedItem); }
+            set { cbMaxVariableMods.SelectedIndex = cbMaxVariableMods.Items.IndexOf(value.ToString()); }
+        }
+
+        public string FragmentIons
+        {
+            get { return cbFragmentIons.SelectedItem.ToString(); }
+
+            set
+            {
+                int i = cbFragmentIons.Items.IndexOf(value);
+                Assume.IsTrue(i >= 0, Resources.DdaSearch_SearchSettingsControl_Fragmentions_not_found_in_combobox);
+                cbFragmentIons.SelectedIndex = i;
+                ImportPeptideSearch.SearchEngine.SetFragmentIons(value);
+            }
         }
 
         private void btnAdditionalSettings_Click(object sender, EventArgs e)

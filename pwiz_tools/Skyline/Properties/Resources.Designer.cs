@@ -8129,6 +8129,33 @@ namespace pwiz.Skyline.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Conversion cancelled..
+        /// </summary>
+        public static string DDASearchControl_RunSearch_Conversion_cancelled_ {
+            get {
+                return ResourceManager.GetString("DDASearchControl_RunSearch_Conversion_cancelled_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Conversion failed..
+        /// </summary>
+        public static string DDASearchControl_RunSearch_Conversion_failed_ {
+            get {
+                return ResourceManager.GetString("DDASearchControl_RunSearch_Conversion_failed_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Conversion finished..
+        /// </summary>
+        public static string DDASearchControl_RunSearch_Conversion_finished_ {
+            get {
+                return ResourceManager.GetString("DDASearchControl_RunSearch_Conversion_finished_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Search canceled..
         /// </summary>
         public static string DDASearchControl_SearchProgress_Search_canceled {
@@ -8658,6 +8685,15 @@ namespace pwiz.Skyline.Properties {
         public static string DiaIsolationWindowsGraphForm_DiaIsolationWindowsGraphForm_Measurement_Windows {
             get {
                 return ResourceManager.GetString("DiaIsolationWindowsGraphForm_DiaIsolationWindowsGraphForm_Measurement_Windows", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Starting DIA-Umpire conversion.
+        /// </summary>
+        public static string DiaUmpireDdaConverter_Run_Starting_DIA_Umpire_conversion {
+            get {
+                return ResourceManager.GetString("DiaUmpireDdaConverter_Run_Starting_DIA_Umpire_conversion", resourceCulture);
             }
         }
         
