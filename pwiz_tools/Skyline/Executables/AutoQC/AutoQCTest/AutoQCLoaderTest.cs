@@ -1,6 +1,7 @@
 ﻿using AutoQC;
 using AutoQC.Properties;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using pwiz.SkylineTestUtil;
 
 namespace AutoQCTest
 {
@@ -49,9 +50,10 @@ namespace AutoQCTest
 
         private void PopulateNewConfigForm(AutoQcConfigForm newConfigForm)
         {
+            var testFilesDir = new TestFilesDir(TestContext, TestFilesZip);
             newConfigForm.ConfigName = @"This is a test config";
-            newConfigForm.SkylineFilePath = TestFilesDir.GetTestPath(@"QEP_2015_0424_RJ.sky");
-            newConfigForm.FolderToWatch = TestFilesDir.FullPath;
+            newConfigForm.SkylineFilePath = testFilesDir.GetTestPath(@"QEP_2015_0424_RJ.sky");
+            newConfigForm.FolderToWatch = testFilesDir.FullPath;
         }
     }
 }

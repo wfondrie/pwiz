@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Windows.Forms;
 using AutoQC;
@@ -17,21 +19,24 @@ namespace AutoQCTest
     /// <summary>
     /// All functional tests MUST derive from this base class.
     /// </summary>
-    public abstract class AbstractAutoQcFunctionalTest : AbstractFunctionalTest
+    public abstract class AbstractAutoQcFunctionalTest
     {
         private const int SLEEP_INTERVAL = 100;
-        public new const int WAIT_TIME = 60 * 1000;    // 60 seconds
+        public const int WAIT_TIME = 60 * 1000;    // 60 seconds
         
         private bool _testCompleted;
 
         public static MainForm MainWindow => Program.MainWindow;
+        protected static bool LaunchDebuggerOnWaitForConditionTimeout { get; set; } // Use with caution - this will prevent scheduled tests from completing, so we can investigate a problem
+
+        protected abstract void DoTest();
 
         /// <summary>
         /// Starts up AutoQCLoader, and runs the <see cref="AbstractFunctionalTest.DoTest"/> test method.
         /// </summary>
         protected void RunFunctionalTest()
         {
-            bool firstTry = true;
+            // bool firstTry = true;
             // Be prepared to re-run test in the event that a previously downloaded data file is damaged or stale
             for (; ; )
             {
@@ -61,22 +66,22 @@ namespace AutoQCTest
                     }
                 }
 
-                if (firstTry && Program.TestExceptions.Count > 0 && RetryDataDownloads)
-                {
-                    try
-                    {
-                        if (FreshenTestDataDownloads())
-                        {
-                            firstTry = false;
-                            Program.TestExceptions.Clear();
-                            continue;
-                        }
-                    }
-                    catch (Exception xx)
-                    {
-                        Program.AddTestException(xx); // Some trouble with data download, make a note of it
-                    }
-                }
+                // if (firstTry && Program.TestExceptions.Count > 0 && RetryDataDownloads)
+                // {
+                //     try
+                //     {
+                //         if (FreshenTestDataDownloads())
+                //         {
+                //             firstTry = false;
+                //             Program.TestExceptions.Clear();
+                //             continue;
+                //         }
+                //     }
+                //     catch (Exception xx)
+                //     {
+                //         Program.AddTestException(xx); // Some trouble with data download, make a note of it
+                //     }
+                // }
 
 
                 if (Program.TestExceptions.Count > 0)
@@ -160,7 +165,7 @@ namespace AutoQCTest
             return waitCycles;
         }
 
-        protected new static TDlg ShowDialog<TDlg>([InstantHandle] Action act, int millis = -1) where TDlg : Form
+        protected static TDlg ShowDialog<TDlg>([InstantHandle] Action act, int millis = -1) where TDlg : Form
         {
             var existingDialog = FindOpenForm<TDlg>();
             if (existingDialog != null)
@@ -183,7 +188,20 @@ namespace AutoQCTest
             return dlg;
         }
 
-        public new static TDlg WaitForOpenForm<TDlg>(int millis = WAIT_TIME) where TDlg : Form
+        public static TDlg FindOpenForm<TDlg>() where TDlg : Form
+        {
+            foreach (var form in OpenForms)
+            {
+                var tForm = form as TDlg;
+                if (tForm != null && tForm.Created)
+                {
+                    return tForm;
+                }
+            }
+            return null;
+        }
+
+        public static TDlg WaitForOpenForm<TDlg>(int millis = WAIT_TIME) where TDlg : Form
         {
             var result = TryWaitForOpenForm<TDlg>(millis);
             if (result == null)
@@ -235,7 +253,7 @@ namespace AutoQCTest
             return text;
         }
 
-        public new static TDlg TryWaitForOpenForm<TDlg>(int millis = WAIT_TIME, Func<bool> stopCondition = null) where TDlg : Form
+        public static TDlg TryWaitForOpenForm<TDlg>(int millis = WAIT_TIME, Func<bool> stopCondition = null) where TDlg : Form
         {
             int waitCycles = GetWaitCycles(millis);
             for (int i = 0; i < waitCycles; i++)
@@ -257,7 +275,7 @@ namespace AutoQCTest
         }
 
 
-        public new static void WaitForClosedForm(Form formClose)
+        public static void WaitForClosedForm(Form formClose)
         {
             int waitCycles = GetWaitCycles();
             for (int i = 0; i < waitCycles; i++)
@@ -272,6 +290,18 @@ namespace AutoQCTest
             }
 
             Assert.Fail(@"Timeout {0} seconds exceeded in WaitForClosedForm. Open forms: {1}", waitCycles * SLEEP_INTERVAL / 1000, GetOpenFormsString());
+        }
+
+        public static bool IsFormOpen(Form form)
+        {
+            foreach (var formOpen in OpenForms)
+            {
+                if (ReferenceEquals(form, formOpen))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         protected static void RunDlg<TDlg>(Action show, [InstantHandle] Action<TDlg> act = null, bool pause = false, int millis = -1) where TDlg : Form
@@ -397,7 +427,7 @@ namespace AutoQCTest
             }
         }
 
-        public new static bool WaitForConditionUI(int millis, Func<bool> func, Func<string> timeoutMessage = null, bool failOnTimeout = true, bool throwOnProgramException = true)
+        public static bool WaitForConditionUI(int millis, Func<bool> func, Func<string> timeoutMessage = null, bool failOnTimeout = true, bool throwOnProgramException = true)
         {
             int waitCycles = GetWaitCycles(millis);
             for (int i = 0; i < waitCycles; i++)
@@ -481,7 +511,7 @@ namespace AutoQCTest
             });
         }
 
-        protected new static void RunUI([InstantHandle] Action act)
+        protected static void RunUI([InstantHandle] Action act)
         {
             AppInvoke(() =>
             {
@@ -504,6 +534,122 @@ namespace AutoQCTest
         private static void AppBeginInvoke(Action act)
         {
             MainWindow?.BeginInvoke(act);
+        }
+
+
+        // From AbstractUnitTest.cs
+        /// <summary>
+        /// Tracks which zip files were downloaded this run, and which might possibly be stale
+        /// </summary>
+        public Dictionary<string, bool> DictZipFileIsKnownCurrent { get; private set; }
+        public string TestFilesZip
+        {
+            get
+            {
+                // ReSharper disable LocalizableElement
+                Assert.AreEqual(1, _testFilesZips.Length, "Attempt to use TestFilesZip on test with multiple ZIP files.\nUse TestFilesZipPaths instead.");
+                // ReSharper restore LocalizableElement
+                return _testFilesZips[0];
+            }
+            set { TestFilesZipPaths = new[] { value }; }
+        }
+
+        private string[] _testFilesZips;
+        public TestFilesDir[] TestFilesDirs { get; set; }
+        public string TestDirectoryName { get; set; }
+
+        /// <summary>
+        /// Optional list of files to be retained from run to run. Useful for really
+        /// large data files which are expensive to extract and keep as local copies.
+        /// </summary>
+        public string[] TestFilesPersistent { get; set; }
+
+        // ReSharper disable UnusedAutoPropertyAccessor.Global
+        // ReSharper disable MemberCanBeProtected.Global
+        public TestContext TestContext { get; set; }
+        // ReSharper restore MemberCanBeProtected.Global
+        // ReSharper restore UnusedAutoPropertyAccessor.Global
+
+        public bool IsExtractHere(int zipPathIndex)
+        {
+            return TestFilesZipExtractHere != null && TestFilesZipExtractHere[zipPathIndex];
+        }
+
+        /// <summary>
+        /// One bool per TestFilesZipPaths indicating whether to unzip in the root directory (true) or a sub-directory (false or null)
+        /// </summary>
+        public bool[] TestFilesZipExtractHere { get; set; }
+
+        public string[] TestFilesZipPaths
+        {
+            get { return _testFilesZips; }
+            set
+            {
+                string[] zipPaths = value;
+                _testFilesZips = new string[zipPaths.Length];
+                DictZipFileIsKnownCurrent = new Dictionary<string, bool>();
+                for (int i = 0; i < zipPaths.Length; i++)
+                {
+                    var zipPath = zipPaths[i];
+                    // If the file is on the web, save it to the local disk in the developer's
+                    // Downloads folder for future use
+                    if (zipPath.Substring(0, 8).ToLower().Equals(@"https://") || zipPath.Substring(0, 7).ToLower().Equals(@"http://"))
+                    {
+                        var targetFolder = GetTargetZipFilePath(zipPath, out var zipFilePath);
+                        if (!File.Exists(zipFilePath)) // If this is a perf test, skip download unless perf tests are enabled
+                        {
+                            zipPath = DownloadZipFile(targetFolder, zipPath, zipFilePath);
+                            DictZipFileIsKnownCurrent.Add(zipPath, true);
+                        }
+                        else
+                        {
+                            DictZipFileIsKnownCurrent.Add(zipPath, false); // May wish to retry test with a fresh download if it fails
+                        }
+                        zipPath = zipFilePath;
+                    }
+                    _testFilesZips[i] = zipPath;
+                }
+            }
+        }
+
+        private static string GetTargetZipFilePath(string zipPath, out string zipFilePath)
+        {
+            var downloadsFolder = PathEx.GetDownloadsPath();
+            var urlFolder = zipPath.Split('/')[zipPath.Split('/').Length - 2]; // usually "tutorial" or "PerfTest"
+            var targetFolder =
+                Path.Combine(downloadsFolder, char.ToUpper(urlFolder[0]) + urlFolder.Substring(1)); // "tutorial"->"Tutorial"
+            var fileName = zipPath.Substring(zipPath.LastIndexOf('/') + 1);
+            zipFilePath = Path.Combine(targetFolder, fileName);
+            return targetFolder;
+        }
+
+        private static string DownloadZipFile(string targetFolder, string zipPath, string zipFilePath)
+        {
+            if (!Directory.Exists(targetFolder))
+                Directory.CreateDirectory(targetFolder);
+
+            bool downloadFromS3 = Environment.GetEnvironmentVariable("SKYLINE_DOWNLOAD_FROM_S3") == "1";
+            string s3hostname = @"skyline-perftest.s3-us-west-2.amazonaws.com";
+            if (downloadFromS3)
+                zipPath = zipPath.Replace(@"skyline.gs.washington.edu", s3hostname).Replace(@"skyline.ms", s3hostname);
+
+            WebClient webClient = new WebClient();
+            using (var fs = new FileSaver(zipFilePath))
+            {
+                try
+                {
+                    webClient.DownloadFile(zipPath.Split('\\')[0],
+                        fs.SafeName); // We encode a Chorus anonymous download string as two parts: url\localName
+                }
+                catch (Exception x)
+                {
+                    Assert.Fail("Could not download {0}: {1}", zipPath, x.Message);
+                }
+
+                fs.Commit();
+            }
+
+            return zipPath;
         }
     }
 }

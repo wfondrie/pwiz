@@ -336,7 +336,7 @@ namespace AutoQCTest
             watcher.Stop();
         }
 
-        [TestMethod]
+        // [TestMethod]
         public void TestMappedDrive()
         {
             // TODO: Only works on Vagisha Sharma's computer!
@@ -351,7 +351,7 @@ namespace AutoQCTest
             TestGetNewFilesForInstrument(testDir, MainSettings.SHIMADZU);
         }
 
-        [TestMethod]
+        // [TestMethod]
         public void TestUncPaths()
         {
             // TODO: Only works on Vagisha Sharma's computer!
