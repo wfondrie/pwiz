@@ -54,9 +54,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\bin\x64\Release\pwiz.CommonUtil.dll</HintPath>
     </Reference>
-    <Reference Include="Skyline-daily">
-      <HintPath>..\..\..\bin\x64\Release\Skyline-daily.exe</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -78,6 +75,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="AbstractAutoQcFunctionalTest.cs" />
+    <Compile Include="AbstractBaseFunctionalTest.cs" />
     <Compile Include="AutoQCLoaderTest.cs" />
     <Compile Include="MainSettingsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

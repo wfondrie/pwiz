@@ -45,10 +45,9 @@ namespace AutoQC
         #region For tests
         public static MainForm MainWindow { get; private set; }     // Accessed by functional tests
         // Parameters for running tests
-        public static bool UnitTest { get; set; }                   // Set to true by AbstractUnitTest and AbstractFunctionalTest
         public static bool FunctionalTest { get; set; }             // Set to true by AbstractFunctionalTest
         public static List<Exception> TestExceptions { get; set; }  // To avoid showing unexpected exception UI during tests and instead log them as failures
-        public static IList<string> PauseForms { get; set; }        // List of forms to pause after displaying.
+        // public static IList<string> PauseForms { get; set; }        // List of forms to pause after displaying.
         #endregion
 
         [STAThread]
@@ -58,7 +57,7 @@ namespace AutoQC
             Application.SetCompatibleTextRenderingDefault(false);
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             // Handle exceptions on the UI thread.
-            Application.ThreadException += ((sender, e) => LOG.Error(e.Exception));
+            Application.ThreadException += ThreadExceptionEventHandler;
             // Handle exceptions on the non-UI thread.
             AppDomain.CurrentDomain.UnhandledException += ((sender, e) =>
             {
@@ -137,6 +136,17 @@ namespace AutoQC
 
                 mutex.ReleaseMutex();
             }
+        }
+
+        private static void ThreadExceptionEventHandler(object sender, ThreadExceptionEventArgs e)
+        {
+            if (TestExceptions != null)
+            {
+                AddTestException(e.Exception);
+                return;
+            }
+
+            LOG.Error(e.Exception);
         }
 
         private static void InitSkylineSettings()
