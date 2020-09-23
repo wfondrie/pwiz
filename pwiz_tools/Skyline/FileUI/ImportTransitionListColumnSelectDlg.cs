@@ -324,7 +324,7 @@ namespace pwiz.Skyline.FileUI
             Settings.Default.CustomImportTransitionListColumnCount =
                 Importer.RowReader.Lines[0].ParseDsvFields(Importer.Separator).Length;
         }
-
+        // Saves a list of the current document's headers, if any exist, so that they can be compared to those of the next document
         private void updateHeadersList()
         {
             var headers = Importer.RowReader.Indices.Headers;
@@ -333,7 +333,6 @@ namespace pwiz.Skyline.FileUI
                 Settings.Default.CustomImportTransitionListHeaders = headers.ToList();
             }
         }
-
         private void dataGrid_ColumnWidthChanged(object sender, DataGridViewColumnEventArgs e)
         {
             ResizeComboBoxes();

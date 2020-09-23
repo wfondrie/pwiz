@@ -1274,6 +1274,8 @@ namespace pwiz.Skyline.Model
                 if (iProt == -1)
                     iProt = FindProtein(fieldsFirstRow, iSequence, lines, indices.Headers, provider, separator);
                 int iPrecursorCharge = indices.PrecursorChargeColumn;
+                // Explicitly declaring the charge state interferes with downstream logic that matches m/z and peptide
+                // to plausible peptide modifications
                 //if (iPrecursorCharge == -1)
                 //    iPrecursorCharge = FindPrecursorCharge(fieldsFirstRow, lines, separator);
                 int iFragmentName = indices.FragmentNameColumn;
@@ -1546,7 +1548,8 @@ namespace pwiz.Skyline.Model
             // N.B. using a regex here for consistency with pwiz_tools\Skyline\SettingsUI\EditOptimizationLibraryDlg.cs(401)
             // Regular expression for finding a fragment name. Checks if the first character is a,b,c,x,y, or z and the second character is a digit
             private static readonly Regex RGX_FRAGMENT_NAME = new Regex(@"precursor|([abcxyz][\d]+)", RegexOptions.IgnoreCase);
-            
+
+            // This detection method for Precursor Charge interferes with downstream logic for guessing peptide modifications
             /*private static int FindPrecursorCharge (string[] fields, IList<string> lines, char separator)
             {
                 var listCandidates = new List<int>();
@@ -1943,17 +1946,22 @@ namespace pwiz.Skyline.Model
             return ci;
         }
 
+        private string FormatHeader(string col)
+        {
+            // Remove spaces and make lowercase. This matches the format of the names they are tested against
+            return col.ToLowerInvariant().Replace(" ", "");
+        }
         public void FindColumns(string[] headers)
         {
             Headers = headers;
-            ProteinColumn = headers.IndexOf(col => ProteinNames.Contains(col.ToLowerInvariant()));
-            PrecursorChargeColumn = headers.IndexOf(col => PrecursorChargeNames.Contains(col.ToLowerInvariant()));
-            ProductChargeColumn = headers.IndexOf(col => ProductChargeNames.Contains(col.ToLowerInvariant()));
-            DecoyColumn = headers.IndexOf(col => DecoyNames.Contains(col.ToLowerInvariant()));
-            IrtColumn = headers.IndexOf(col => IrtColumnNames.Contains(col.ToLowerInvariant()));
-            LibraryColumn = headers.IndexOf(col => LibraryColumnNames.Contains(col.ToLowerInvariant()));
-            LabelTypeColumn = headers.IndexOf(col => LabelTypeNames.Contains(col.ToLowerInvariant()));
-            FragmentNameColumn = headers.IndexOf(col => FragmentNameNames.Contains(col.ToLowerInvariant()));
+            ProteinColumn = headers.IndexOf(col => ProteinNames.Contains(FormatHeader(col)));
+            PrecursorChargeColumn = headers.IndexOf(col => PrecursorChargeNames.Contains(FormatHeader(col)));
+            ProductChargeColumn = headers.IndexOf(col => ProductChargeNames.Contains(FormatHeader(col)));
+            DecoyColumn = headers.IndexOf(col => DecoyNames.Contains(FormatHeader(col)));
+            IrtColumn = headers.IndexOf(col => IrtColumnNames.Contains(FormatHeader(col)));
+            LibraryColumn = headers.IndexOf(col => LibraryColumnNames.Contains(FormatHeader(col)));
+            LabelTypeColumn = headers.IndexOf(col => LabelTypeNames.Contains(FormatHeader(col)));
+            FragmentNameColumn = headers.IndexOf(col => FragmentNameNames.Contains(FormatHeader(col)));
         }
 
         // Checks all the column indices and resets any that have the given index to -1
