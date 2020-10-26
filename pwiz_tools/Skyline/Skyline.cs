@@ -2178,7 +2178,7 @@ namespace pwiz.Skyline
             if (!nodeTransGroup.Peptide.IsCustomMolecule)
                 return;
 
-            var existingPrecursors = nodeTransitionGroupTree.PepNode.TransitionGroups.Select(child => child.TransitionGroup).Where(c => c.IsCustomIon).ToArray();
+            var existingPrecursors = nodeTransitionGroupTree.PepNode.TransitionGroups.Where(c => c.IsCustomIon).ToArray();
             using (var dlg = new EditCustomMoleculeDlg(this, 
                     EditCustomMoleculeDlg.UsageMode.precursor,
                     Resources.SkylineWindow_ModifySmallMoleculeTransitionGroup_Modify_Custom_Ion_Precursor, 
@@ -2207,7 +2207,7 @@ namespace pwiz.Skyline
                             {
                                 // ID Changes impact all children, because IDs have back pointers to their parents.
                                 // User altered some identity item so we have to insert a copy of the tree from here down, and delete  
-                                var newNode = nodeTransGroup.UpdateSmallMoleculeTransitionGroup(nodeTransGroup.Peptide, newTransGroup, Document.Settings);
+                                var newNode = nodeTransGroup.DeepCopyTransitionGroup(nodeTransGroup.Peptide, newTransGroup, Document.Settings);
                                 var newdoc = (SrmDocument) doc.Insert(nodeTransitionGroupTree.Path, newNode);
                                 return (SrmDocument) newdoc.RemoveChild(nodeTransitionGroupTree.Path.Parent, nodeTransGroup);
                             }
@@ -2216,6 +2216,7 @@ namespace pwiz.Skyline
                                 var newNode =
                                     new TransitionGroupDocNode(nodeTransGroup.TransitionGroup,
                                         nodeTransGroup.Annotations, Document.Settings, null, null,
+                                        nodeTransGroup.IonMobilityAndCCS,
                                         dlg.ResultExplicitTransitionGroupValues, nodeTransGroup.Results,
                                         nodeTransGroup.Children.Cast<TransitionDocNode>().ToArray(),
                                         nodeTransGroup.AutoManageChildren);
@@ -2307,8 +2308,7 @@ namespace pwiz.Skyline
                 var nodeGroupTree = SequenceTree.GetNodeOfType<TransitionGroupTreeNode>();
                 // Existing transitions to avoid duplication
                 var existingMolecules = nodeGroupTree.DocNode.Transitions
-                        .Select(nodeT => nodeT.Transition)
-                        .Where(t => t.IsNonReporterCustomIon()).ToArray();
+                    .Where(t => t.Transition.IsNonReporterCustomIon()).ToArray();
 
                 using (var dlg = new EditCustomMoleculeDlg(this,
                     EditCustomMoleculeDlg.UsageMode.fragment,
@@ -3243,8 +3243,8 @@ namespace pwiz.Skyline
                 var nodeGroup = nodeGroupTree.DocNode;
                 var groupPath = nodeGroupTree.Path;
                 // List of existing transitions to avoid duplication
-                var existingIons = nodeGroup.Transitions.Select(child => child.Transition)
-                                                        .Where(c => c.IsNonReporterCustomIon()).ToArray();
+                var existingIons = nodeGroup.Transitions.
+                    Where(c => c.Transition.IsNonReporterCustomIon()).ToArray();
                 using (var dlg = new EditCustomMoleculeDlg(this,
                     EditCustomMoleculeDlg.UsageMode.fragment,
                     Resources.SkylineWindow_AddMolecule_Add_Transition, null, existingIons,
@@ -3280,7 +3280,7 @@ namespace pwiz.Skyline
                 var pepPath = nodePepTree.Path;
                 var notFirst = nodePep.TransitionGroups.Any();
                 // Get a list of existing precursors - likely basis for adding a heavy version
-                var existingPrecursors = nodePep.TransitionGroups.Select(child => child.TransitionGroup).Where(c => c.IsCustomIon).ToArray();
+                var existingPrecursors = nodePep.TransitionGroups.Where(c => c.IsCustomIon).ToArray();
                 using (var dlg = new EditCustomMoleculeDlg(this,
                     EditCustomMoleculeDlg.UsageMode.precursor,
                     Resources.SkylineWindow_AddSmallMolecule_Add_Precursor,
@@ -3301,7 +3301,9 @@ namespace pwiz.Skyline
                         {
                             tranGroup = new TransitionGroup(nodePep.Peptide, dlg.Adduct, dlg.IsotopeLabelType);
                             tranGroupDocNode = new TransitionGroupDocNode(tranGroup, Annotations.EMPTY,
-                                doc.Settings, null, null, dlg.ResultExplicitTransitionGroupValues, null, GetDefaultPrecursorTransitions(doc, tranGroup), true);
+                                doc.Settings, null, null, 
+                                IonMobilityAndCCS.EMPTY,
+                                dlg.ResultExplicitTransitionGroupValues, null, GetDefaultPrecursorTransitions(doc, tranGroup), true);
                             return (SrmDocument)doc.Add(pepPath, tranGroupDocNode);
                         }, docPair => AuditLogEntry.DiffDocNodes(MessageType.added_small_molecule_precursor, docPair, tranGroupDocNode.AuditLogText));
                     }
@@ -3337,7 +3339,9 @@ namespace pwiz.Skyline
                             var peptide = new Peptide(peptideMolecule);
                             var tranGroup = new TransitionGroup(peptide, dlg.Adduct, dlg.IsotopeLabelType, true, null);
                             var tranGroupDocNode = new TransitionGroupDocNode(tranGroup, Annotations.EMPTY,
-                                doc.Settings, null, null, dlg.ResultExplicitTransitionGroupValues, null,
+                                doc.Settings, null, null,
+                                IonMobilityAndCCS.EMPTY,
+                                dlg.ResultExplicitTransitionGroupValues, null,
                                 GetDefaultPrecursorTransitions(doc, tranGroup), true);
                             var nodePepNew = new PeptideDocNode(peptide, Document.Settings, null, null,
                                 dlg.ResultRetentionTimeInfo, new[] { tranGroupDocNode }, true);

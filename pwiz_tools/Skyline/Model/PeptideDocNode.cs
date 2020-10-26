@@ -666,7 +666,7 @@ namespace pwiz.Skyline.Model
                 var children = new List<TransitionGroupDocNode>();
                 foreach (var nodeGroup in TransitionGroups)
                 {
-                    children.Add(nodeGroup.UpdateSmallMoleculeTransitionGroup(newPeptide, null, settings));
+                    children.Add(nodeGroup.DeepCopyTransitionGroup(newPeptide, null, settings));
                 }
                 return new PeptideDocNode(newPeptide, settings, ExplicitMods, SourceKey, explicitRetentionTime, children.ToArray(), AutoManageChildren);
             }
@@ -1001,6 +1001,178 @@ namespace pwiz.Skyline.Model
                     nodeResult = (PeptideDocNode)nodeResult.ChangeChildrenChecked(childrenNew);
                 }                
             }
+
+            if (diff.DiffIonMobilityLibraryValues)
+            {
+                // Some complexity here:
+                //   more than one transition group may exist with the same ion but different ion mobility ("multiple conformers")
+                //   multiple conformers may arise from multiple nodes with different explicit IM values, or from multiple entries in .imsdb file
+                //   the change here might be from no IM to multi-IM, or IM to multi-IM, or IM removal, etc
+                var proposedTGNodes = nodeResult.TransitionGroups.ToArray(); // Transition groups per current settings
+                var nodePep = nodeResult;
+                var proposedTGNodeLibKeys = 
+                    proposedTGNodes.ToDictionary(n => n,n => n.GetLibKey(settingsNew, nodePep));
+                var filterIM = settingsNew.TransitionSettings.IonMobilityFiltering.UseSpectralLibraryIonMobilityValues ||
+                               !settingsNew.TransitionSettings.IonMobilityFiltering.IonMobilityLibrary.IsNone;
+                var rejects = new HashSet<TransitionGroupDocNode>(); // Nodes to discard
+                var keepers = new Dictionary<TransitionGroupDocNode, IonMobilityAndCCS>(); // Nodes to retain, with desired IM value
+                var blockedOnIMSDB = !settingsNew.TransitionSettings.IonMobilityFiltering.IonMobilityLibrary.IsNone &&
+                                     !settingsNew.TransitionSettings.IonMobilityFiltering.IonMobilityLibrary.IsUsable;
+                var blockedOnBlib = settingsNew.PeptideSettings.Libraries.HasLibraries && !settingsNew.PeptideSettings.Libraries.IsLoaded;
+                bool changeChildren = false;
+                if (!filterIM)
+                {
+                    // No ion mobility filtering, identify any nodes created to support multiple conformers and reject them
+                    // Afterwards there should remain only one TransitionGroup per libkey, unless they have have explicit IM values
+                    foreach (var node in proposedTGNodes)
+                    {
+                        if (!node.ExplicitValues.IonMobilityAndCCS.IsEmpty) // Leave explicit IM values alone
+                        {
+                            keepers.Add(node, node.IonMobilityAndCCS);
+                        }
+                        else if (!rejects.Contains(node)) // Already noted?
+                        {
+                            keepers.Add(node, IonMobilityAndCCS.EMPTY); // Retain a single node, remove any multiple conformers
+                            var libKey = proposedTGNodeLibKeys[node];
+                            foreach (var otherNode in proposedTGNodes.Where(n => Equals(libKey, proposedTGNodeLibKeys[n])))
+                            {
+                                if (!ReferenceEquals(node, otherNode) &&
+                                    otherNode.ExplicitValues.IonMobilityAndCCS.IsEmpty) // Retain nodes with explicit IM values
+                                {
+                                    rejects.Add(otherNode);
+                                }
+                            }
+                        }
+                    }
+                    changeChildren = true;
+                }
+                else if (!(blockedOnIMSDB || blockedOnBlib)) // Put this off if library load state isn't what we need, we'll catch it on library load event instead
+                {
+                    // Ion mobility filtering, add or remove nodes for multiple conformers if needed
+                    // Cases to consider:
+                    //   Multi-conformer retreats to single conformer: multi-IM nodes go away
+                    //   Single conformer goes multi: multi-IM nodes added
+                    //   IM library value no longer can be found: single IM value goes away, multi-IM nodes go away
+                    //   No change
+
+                    var libKeyNodes = 
+                        proposedTGNodeLibKeys.ToLookup(kvp=> kvp.Value, kvp => kvp.Key);
+                    var targetIons = libKeyNodes.Select(item => item.Key).ToArray();
+                    var libKeyIonMobilities = settingsNew.GetIonMobilities(targetIons, null).GetIonMobilityDict();
+
+                    foreach (var node in proposedTGNodes)
+                    {
+                        var libKey = proposedTGNodeLibKeys[node];
+                        var libraryIonMMobilities = libKeyIonMobilities.ContainsKey(libKey) ? libKeyIonMobilities[libKey].ToHashSet() : new HashSet<IonMobilityAndCCS>();
+                        var noLibraryValuesThisLibKey = libraryIonMMobilities.Count ==  0 || libraryIonMMobilities.First().IsEmpty;
+                        var nodesWithThisLibKey = libKeyNodes[libKey].ToArray();
+
+                        if (rejects.Contains(node)) // Already processed
+                        {
+                            continue;
+                        }
+                        if (!node.ExplicitValues.IonMobilityAndCCS.IsEmpty) // Explicit IM always stays, and overrides any library value
+                        {
+                            foreach (var sibling in libKeyNodes[libKey])
+                            {
+                                if (sibling.ExplicitValues.IonMobilityAndCCS.IsEmpty) // Retain any explicit values
+                                {
+                                    rejects.Add(sibling); // Discard any library values
+                                }
+                            }
+                            keepers.Add(node, node.IonMobilityAndCCS);
+                        }
+                        else if (noLibraryValuesThisLibKey) // Clearing out IM filters for this precursor
+                        {
+                            if (nodesWithThisLibKey.Any(n => !n.ExplicitValues.IonMobilityAndCCS.IsEmpty))
+                            {
+                                rejects.Add(node); // Discard in favor of explicit value
+                            }
+                            else
+                            {
+                                keepers.Add(node, IonMobilityAndCCS.EMPTY); // Retain single node, remove any former multiples
+                                foreach (var sibling in nodesWithThisLibKey)
+                                {
+                                    if (!ReferenceEquals(node, sibling))
+                                    {
+                                        rejects.Add(sibling);
+                                    }
+                                }
+                            }
+                        }
+                        else // We do have IM value(s) for this node's LibKey, see if they're new or not
+                        {
+                            if (libraryIonMMobilities.Contains(node.IonMobilityAndCCS))
+                            {
+                                keepers.Add(node, node.IonMobilityAndCCS); // No change needed
+                                libraryIonMMobilities.Remove(node.IonMobilityAndCCS); // Handled
+                            }
+                            else if (libraryIonMMobilities.Count == 0)
+                            {
+                                rejects.Add(node); // No more need for this node
+                            }
+                            else
+                            {
+                                // Ion mobility for this node is obsolete - replace? Or remove node?
+                                var mobility = libraryIonMMobilities.FirstOrDefault(im =>
+                                    !proposedTGNodes.Any(n => Equals(n.IonMobilityAndCCS, im)));
+                                if (mobility == null)
+                                {
+                                    rejects.Add(node); // No need for this node, others already have the required IM values
+                                }
+                                else
+                                {
+                                    keepers.Add(node, mobility); // Replace this node's mobility info
+                                    libraryIonMMobilities.Remove(node.IonMobilityAndCCS); // Handled
+                                }
+                            }
+                        }
+
+                        changeChildren = true;
+                    }
+
+                    if (changeChildren)
+                    {
+                        foreach (var kvp in libKeyIonMobilities)
+                        {
+                            // If there are library ion mobilities not yet accounted for - ie new multiple conformers - make copies of nodes as needed
+                            var libKey = kvp.Key;
+                            var keepersWithThisAdduct = 
+                                keepers.Where(k => k.Key.PrecursorAdduct.Equals(libKey.Adduct) &&
+                                                   k.Key.ExplicitValues.IonMobilityAndCCS.IsEmpty).ToArray();
+                            if (keepersWithThisAdduct.Any())
+                            {
+                                foreach (var ionMobility in kvp.Value)
+                                {
+                                    if (!keepersWithThisAdduct.Any(k => k.Value.Equals(ionMobility)))
+                                    {
+                                        var transitionGroupDocNode = keepersWithThisAdduct[0].Key;
+                                        var transitionGroup = transitionGroupDocNode.TransitionGroup;
+                                        var newTransGroup = new TransitionGroup(transitionGroup.Peptide, libKey.Adduct, transitionGroup.LabelType,
+                                            false, transitionGroup.DecoyMassShift);
+                                        var node = transitionGroupDocNode.DeepCopyTransitionGroup(
+                                            newTransGroup.Peptide, newTransGroup, settingsNew, ionMobility);
+                                        keepers.Add(node, ionMobility);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (changeChildren)
+                {
+                    // Now remove any rejected nodes, and adjust nodes to be kept or added
+                    var newNodes = new List<DocNode>();
+                    foreach (var kvp in keepers)
+                    {
+                        var transitionGroupDocNode = kvp.Key;
+                        var ionMobilityAndCCS = kvp.Value;
+                        newNodes.Add(transitionGroupDocNode.ChangeLibraryIonMobility(ionMobilityAndCCS));
+                    }
+                    nodeResult = (PeptideDocNode)nodeResult.ChangeChildren(newNodes);
+                }
+
+            } // End if diff.DiffIonMobilityLibraryValues
 
             if (diff.DiffResults || ChangedResults(nodeResult))
                 nodeResult = nodeResult.UpdateResults(settingsNew /*, diff*/);

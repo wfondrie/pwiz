@@ -104,7 +104,7 @@ namespace pwiz.Skyline.Util
             SetHashCode(); // For fast GetHashCode()
         }
 
-        private Adduct(string description, ADDUCT_TYPE integerMode, int? explicitCharge = null) // Description should have form similar to M+H, 2M+2NA-H etc, or it may be a text representation of a protonated charge a la "2", "-3" etc
+        private Adduct(string description, ADDUCT_TYPE integerMode, int? explicitCharge = null, bool throwOnError=true) // Description should have form similar to M+H, 2M+2NA-H etc, or it may be a text representation of a protonated charge a la "2", "-3" etc
         {
             var input = (description ?? string.Empty).Trim();
             int chargeFromText;
@@ -172,7 +172,15 @@ namespace pwiz.Skyline.Util
                         }
                     }
                 }
-                ParseDescription(Description = input);
+
+                if (!ParseDescription(Description = input, throwOnError))
+                {
+                    if (!throwOnError)
+                    {
+                        AdductCharge = 0; // Mark as invalid
+                        return;
+                    }
+                }
                 InitializeMasses();
             }
 
@@ -266,7 +274,7 @@ namespace pwiz.Skyline.Util
             return result;
         }
 
-        private void ParseDescription(string input)
+        private bool ParseDescription(string input, bool throwOnError)
         {
             int? declaredCharge = null;
             int? calculatedCharge = null;
@@ -454,6 +462,10 @@ namespace pwiz.Skyline.Util
             var resultMol = Molecule.FromDict(new ImmutableSortedList<string, int>(composition));
             if (!resultMol.Keys.All(k => BioMassCalc.MONOISOTOPIC.IsKnownSymbol(k)))
             {
+                if (!throwOnError)
+                {
+                    return false;
+                }
                 throw new InvalidOperationException(
                     string.Format(Resources.BioMassCalc_ApplyAdductToFormula_Unknown_symbol___0___in_adduct_description___1__,
                         resultMol.Keys.First(k => !BioMassCalc.MONOISOTOPIC.IsKnownSymbol(k)), input));
@@ -475,18 +487,28 @@ namespace pwiz.Skyline.Util
                 }
                 if (!success)
                 {
+                    if (!throwOnError)
+                    {
+                        return false;
+                    }
                     throw new InvalidOperationException(
                         string.Format(Resources.BioMassCalc_ApplyAdductToFormula_Failed_parsing_adduct_description___0__, input));
                 }
             }
             if (declaredCharge.HasValue && calculatedCharge.HasValue && declaredCharge != calculatedCharge)
             {
+                if (!throwOnError)
+                {
+                    return false;
+                }
                 throw new InvalidOperationException(
                     string.Format(
                         Resources
                             .BioMassCalc_ApplyAdductToFormula_Failed_parsing_adduct_description___0____declared_charge__1__does_not_agree_with_calculated_charge__2_,
                         input, declaredCharge.Value, calculatedCharge));
             }
+
+            return true;
         }
         public Adduct Unlabeled { get; private set; } // Version of this adduct without any isotope labels
 
@@ -576,7 +598,7 @@ namespace pwiz.Skyline.Util
         /// Minimizes memory thrash by reusing the more common adducts. 
         ///
         /// </summary>
-        public static Adduct FromString(string value, ADDUCT_TYPE parserMode, int? explicitCharge)
+        public static Adduct FromString(string value, ADDUCT_TYPE parserMode, int? explicitCharge, bool throwOnError = true)
         {
             if (value == null)
                 return EMPTY;
@@ -588,15 +610,15 @@ namespace pwiz.Skyline.Util
 
             // Reuse the more common non-proteomic adducts
             var testValue = value.StartsWith(@"M") ? @"[" + value + @"]" : value;
-            var testAdduct = new Adduct(testValue, parserMode, explicitCharge);
+            var testAdduct = new Adduct(testValue, parserMode, explicitCharge, throwOnError);
             if (!testValue.EndsWith(@"]"))
             {
                 // Can we trim any trailing charge info to arrive at a standard form (ie use [M+H] instead of [M+H]+)?
                 try
                 {
                     var stripped = testValue.Substring(0, testValue.IndexOf(']')+1);
-                    var testB = new Adduct(stripped, parserMode, explicitCharge);
-                    if (testAdduct.SameEffect(testB))
+                    var testB = new Adduct(stripped, parserMode, explicitCharge, throwOnError);
+                    if (!testB.IsEmpty && testAdduct.SameEffect(testB))
                         testAdduct = testB; // Go with the simpler canonical form
                 }
                 catch
@@ -995,7 +1017,7 @@ namespace pwiz.Skyline.Util
             result = EMPTY;
             try
             {
-                result = FromString(s, assumeAdductType, null);
+                result = FromString(s, assumeAdductType, null, false);
                 return result.AdductCharge != 0;
             }
             catch

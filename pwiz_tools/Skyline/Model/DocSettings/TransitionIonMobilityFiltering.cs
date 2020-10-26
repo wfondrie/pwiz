@@ -35,6 +35,7 @@ using pwiz.Skyline.Model.Results;
 using pwiz.Skyline.Model.Serialization;
 using pwiz.Skyline.Properties;
 using pwiz.Skyline.Util;
+using pwiz.Skyline.Util.Extensions;
 using Enum = System.Enum;
 
 namespace pwiz.Skyline.Model.DocSettings
@@ -705,13 +706,12 @@ namespace pwiz.Skyline.Model.DocSettings
                 : EMPTY;
         }
 
-        [Track]
         public string Units
         {
             get { return IonMobilityFilter.IonMobilityUnitsL10NString(IonMobility.Units); }
         }
 
-        [TrackChildren(ignoreName: true)] public IonMobilityValue IonMobility { get; private set; }
+        [TrackChildren(ignoreName: true, defaultValues:typeof(IonMobilityValue.IonMobilityValueDefaults))] public IonMobilityValue IonMobility { get; private set; }
         [Track] public double? CollisionalCrossSectionSqA { get; private set; }
 
         [Track]
@@ -729,6 +729,14 @@ namespace pwiz.Skyline.Model.DocSettings
             }
 
             return null;
+        }
+
+        public class IonMobilityAndCCSDefaults : DefaultValues
+        {
+            public override bool IsDefault(object obj, object parentObject)
+            {
+                return IsNullOrEmpty((IonMobilityAndCCS)obj);
+            }
         }
 
         /// <summary>
@@ -820,7 +828,10 @@ namespace pwiz.Skyline.Model.DocSettings
 
         public override string ToString() // For debug convenience
         {
-            return string.Format(@"ccs{0}/{1}/he{2}/{3}", CollisionalCrossSectionSqA, IonMobility, HighEnergyIonMobilityValueOffset, Units);
+            string ccs = HasCollisionalCrossSection ? $@"ccs{CollisionalCrossSectionSqA}" : null;
+            string im = IonMobility.HasValue ? $@"im{IonMobility}" : null;
+            string highEnergyOffset = (HighEnergyIonMobilityValueOffset??0) != 0 ? $@"he{HighEnergyIonMobilityValueOffset}" : null;
+            return TextUtil.SpaceSeparate(ccs,im,highEnergyOffset).Replace(@" ",@"/");
         }
     }
 

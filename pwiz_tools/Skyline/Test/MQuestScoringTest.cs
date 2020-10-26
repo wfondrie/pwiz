@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using pwiz.Skyline.Model;
+using pwiz.Skyline.Model.DocSettings;
 using pwiz.Skyline.Model.Lib;
 using pwiz.Skyline.Model.Lib.ChromLib;
 using pwiz.Skyline.Model.Results;
@@ -370,7 +371,7 @@ namespace pwiz.SkylineTest
                 var libInfo = new ChromLibSpectrumHeaderInfo("", 0);
                 var peptide = new Peptide(null, "AVVAVVA", null, null, 0);
                 NodeGroup = new TransitionGroupDocNode(new TransitionGroup(peptide, Adduct.FromChargeProtonated(charge ?? 2), labelType), null, null,
-                   null, libInfo, ExplicitTransitionGroupValues.EMPTY, null, new TransitionDocNode[0], true);
+                   null, libInfo, IonMobilityAndCCS.EMPTY, ExplicitTransitionGroupValues.EMPTY, null, new TransitionDocNode[0], true);
             }
 
             public TransitionGroupDocNode NodeGroup { get; private set; }

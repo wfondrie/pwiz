@@ -331,8 +331,7 @@ namespace pwiz.Skyline.Model
             Settings = HasMatches
                 ? settings.ChangePeptideModifications(mods => MatcherPepMods)
                 : settings;
-            TransitionGroupDocNode nodeGroup;
-            var nodePep = CreateDocNodeFromSettings(key, peptide, diff, out nodeGroup);
+            var nodePep = CreateDocNodeFromSettings(key, peptide, diff, out var nodeGroup);
             if (nodePep != null)
             {
                 if (diff == null)
@@ -345,7 +344,7 @@ namespace pwiz.Skyline.Model
                     // will be highlighted differently for light and heavy forms.
                     // Only performed when getting peptides for display in the explorer.
                     nodePep = (PeptideDocNode)nodePep.ChangeChildrenChecked(
-                        new DocNode[] { nodeGroup });
+                        nodeGroup );
                 }
                 return nodePep;
             }
@@ -383,20 +382,29 @@ namespace pwiz.Skyline.Model
             return GetModifiedNode(new LibKey(new PeptideLibraryKey(sequence, 1)), Settings, SrmSettingsDiff.ALL);
         }
 
-        protected override bool IsMatch(Target seqMod, PeptideDocNode nodePepMod, out TransitionGroupDocNode nodeGroup)
+        protected override bool IsMatch(Target seqMod, PeptideDocNode nodePepMod, out TransitionGroupDocNode[] nodeGroups)
         {
-            foreach(TransitionGroupDocNode nodeGroupChild in nodePepMod.Children)
+            nodeGroups = null;
+            foreach (TransitionGroupDocNode nodeGroupChild in nodePepMod.Children)
             {
-                nodeGroup = nodeGroupChild;
                 var calc = Settings.TryGetPrecursorCalc(nodeGroupChild.TransitionGroup.LabelType, nodePepMod.ExplicitMods);
                 if (calc == null)
                     return false;
                 var modSequence = calc.GetModifiedSequence(nodePepMod.Peptide.Target, false);
                 // If this sequence matches the sequence of the library peptide, a match has been found.
-                if (LibKeyIndex.KeysMatch(seqMod.GetLibKey(Adduct.EMPTY), modSequence.GetLibKey(Adduct.EMPTY)))
+                var libraryKey = modSequence.GetLibKey(Adduct.EMPTY);
+                if (LibKeyIndex.KeysMatch(seqMod.GetLibKey(Adduct.EMPTY), libraryKey))
+                {
+                    // Watch for multiple conformers
+                    nodeGroups = nodeGroupChild.IonMobilityAndCCS.IsEmpty ?
+                        new [] { nodeGroupChild } :
+                        (TransitionGroupDocNode[]) nodePepMod.Children.Where(node => Equals(nodeGroupChild.TransitionGroup.LabelType,
+                                                                                         ((TransitionGroupDocNode) node).TransitionGroup.LabelType) &&
+                                                                                     Equals(nodeGroupChild.TransitionGroup.PrecursorAdduct,
+                                                                                         ((TransitionGroupDocNode)node).TransitionGroup.PrecursorAdduct)).ToArray();
                     return true;
+                }
             }
-            nodeGroup = null;
             return false;
         }
 

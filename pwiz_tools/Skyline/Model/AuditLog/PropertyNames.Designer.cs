@@ -1663,6 +1663,15 @@ namespace pwiz.Skyline.Model.AuditLog {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Ion mobility units.
+        /// </summary>
+        public static string IonMobilityValue_Units {
+            get {
+                return ResourceManager.GetString("IonMobilityValue_Units", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Ion mobility filter window fixed width value.
         /// </summary>
         public static string IonMobilityWindowWidthCalculator_FixedWindowWidth {
@@ -4026,6 +4035,15 @@ namespace pwiz.Skyline.Model.AuditLog {
         public static string TransitionGroupDocNode_LabelType {
             get {
                 return ResourceManager.GetString("TransitionGroupDocNode_LabelType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Library ion mobility.
+        /// </summary>
+        public static string TransitionGroupDocNode_LibraryIonMobility {
+            get {
+                return ResourceManager.GetString("TransitionGroupDocNode_LibraryIonMobility", resourceCulture);
             }
         }
         

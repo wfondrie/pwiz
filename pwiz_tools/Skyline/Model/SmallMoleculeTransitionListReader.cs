@@ -28,6 +28,7 @@ using pwiz.Common.Chemistry;
 using pwiz.Common.SystemUtil;
 using pwiz.ProteomeDatabase.API;
 using pwiz.Skyline.EditUI;
+using pwiz.Skyline.Model.DocSettings;
 using pwiz.Skyline.Properties;
 using pwiz.Skyline.Util;
 using pwiz.Skyline.Util.Extensions;
@@ -1791,7 +1792,9 @@ namespace pwiz.Skyline.Model
                 if (tran == null)
                     return null;
                 return new TransitionGroupDocNode(group, document.Annotations, document.Settings, null,
-                    null, moleculeInfo.ExplicitTransitionGroupValues, null, new[] { tran }, true);
+                    null,
+                    IonMobilityAndCCS.EMPTY, 
+                    moleculeInfo.ExplicitTransitionGroupValues, null, new[] { tran }, true);
             }
             catch (InvalidDataException x)
             {

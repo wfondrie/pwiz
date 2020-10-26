@@ -111,11 +111,15 @@ namespace pwiz.SkylineTestData.Results
             using (var docContainer = new ResultsTestDocumentContainer(document, docPath))
             {
                 var doc = docContainer.Document;
+                AssertEx.AreEqual(1, doc.MoleculePrecursorPairs.Count());
                 var docResults = doc.ChangeMeasuredResults(new MeasuredResults(listChromatograms));
+                AssertEx.AreEqual(1, docResults.MoleculePrecursorPairs.Count());
                 AssertEx.IsTrue(docContainer.SetDocument(docResults, doc, true));
                 docContainer.AssertComplete();
                 document = docContainer.Document;
+                AssertEx.AreEqual(1, document.MoleculePrecursorPairs.Count());
             }
+            AssertEx.AreEqual(1, document.MoleculePrecursorPairs.Count());
             document = ConvertToSmallMolecules(document, ref docPath, new[] {mz5Path}, asSmallMolecules);
             using (var docContainer = new ResultsTestDocumentContainer(document, docPath))
             {

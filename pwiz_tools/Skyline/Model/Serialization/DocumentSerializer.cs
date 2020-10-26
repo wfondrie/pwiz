@@ -125,8 +125,9 @@ namespace pwiz.Skyline.Model.Serialization
             public const string drift_time_window = "drift_time_window";  // Obsolete, replaced by ion_mobility_*
             public const string ion_mobility_ms1 = "ion_mobility_ms1";
             public const string ion_mobility_fragment = "ion_mobility_fragment"; 
-            public const string ion_mobility = "ion_mobility"; 
-            public const string ion_mobility_type = "ion_mobility_type"; 
+            public const string ion_mobility = "ion_mobility";
+            public const string ion_mobility_type = "ion_mobility_type";
+            public const string ion_mobility_units = "ion_mobility_units";
             public const string ion_mobility_window = "ion_mobility_window"; 
             public const string ccs = "ccs";
             public const string avg_measured_retention_time = "avg_measured_retention_time";

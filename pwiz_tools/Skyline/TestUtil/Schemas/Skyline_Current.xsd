@@ -1128,7 +1128,18 @@
         <xs:attribute name="charge" type="xs:integer" use="required"/>
         <xs:attribute name="precursor_mz" type="xs:double" use="required"/>
         <xs:attribute name="collision_energy" type="xs:double"/>
+        
+        <!-- Begin library-based ion mobility members
+             Note that multiple conformers are supported, 
+             so there may be multiple TransitionGroups that 
+             differ only in ion mobility -->
         <xs:attribute name="ccs" type="xs:double" use="optional"/>
+        <!-- note that when CCS to IM conversion is available, this IM value may be overridden at chromatogram extraction time -->
+        <xs:attribute name="ion_mobility" type="xs:double" use="optional"/>
+        <xs:attribute name="ion_mobility_high_energy_offset" type="xs:double" use="optional"/>
+        <xs:attribute name="ion_mobility_type" type="xs:string" use="optional"/>
+        <!-- End library-based ion mobility members -->
+        
         <xs:attribute name="declustering_potential" type="xs:double"/>
         <!-- label can be "heavy", "light" or a user defined name -->
         <xs:attribute name="isotope_label" type="xs:string"/>

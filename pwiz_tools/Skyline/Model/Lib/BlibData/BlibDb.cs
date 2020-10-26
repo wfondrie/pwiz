@@ -164,7 +164,7 @@ namespace pwiz.Skyline.Model.Lib.BlibData
             const int minorVer = DbLibInfo.SCHEMA_VERSION_CURRENT;
             string libId = libraryName;
             // Use a very specific LSID, since it really only matches this document.
-            string libLsid = string.Format(@"urn:lsid:{0}:spectral_libary:bibliospec:nr:minimal:{1}:{2}:{3}.{4}",
+            string libLsid = string.Format(@"urn:lsid:{0}:spectral_library:bibliospec:nr:minimal:{1}:{2}:{3}.{4}",
                 libAuthority, libId, Guid.NewGuid(), majorVer, minorVer);
 
             var listLibrary = new List<BiblioLiteSpectrumInfo>();
@@ -182,7 +182,8 @@ namespace pwiz.Skyline.Model.Lib.BlibData
                     listLibrary.Add(new BiblioLiteSpectrumInfo(spectrum.Key, 
                                                                 dbRefSpectrum.Copies,
                                                                 dbRefSpectrum.NumPeaks,
-                                                                (int) (dbRefSpectrum.Id ?? 0)));
+                                                                (int) (dbRefSpectrum.Id ?? 0),
+                                                                (int) (dbRefSpectrum.FileId ?? 0)));
                     if (progressMonitor != null)
                     {
                         if (progressMonitor.IsCanceled)
@@ -379,7 +380,7 @@ namespace pwiz.Skyline.Model.Lib.BlibData
                 }
             }
             // Use a very specific LSID, since it really only matches this document.
-            string libLsid = string.Format(@"urn:lsid:{0}:spectral_libary:bibliospec:nr:minimal:{1}:{2}:{3}.{4}",
+            string libLsid = string.Format(@"urn:lsid:{0}:spectral_library:bibliospec:nr:minimal:{1}:{2}:{3}.{4}",
                 libAuthority, libId, Guid.NewGuid(), libraryRevision, schemaVersion);
 
             var dictLibrary = new Dictionary<LibKey, BiblioLiteSpectrumInfo>();
@@ -468,7 +469,8 @@ namespace pwiz.Skyline.Model.Lib.BlibData
                                     dictLibrary.Add(newLibKey,
                                                     new BiblioLiteSpectrumInfo(newLibKey, refSpectra.Copies,
                                                                                refSpectra.NumPeaks,
-                                                                               (int) (refSpectra.Id ?? 0)));
+                                                                               (int) (refSpectra.Id ?? 0),
+                                                                               (int) (refSpectra.FileId ?? 0)));
                                 }
 
                                 session.Flush();
@@ -511,7 +513,8 @@ namespace pwiz.Skyline.Model.Lib.BlibData
                                                 new BiblioLiteSpectrumInfo(newLibKey,
                                                                            refSpectra.Copies,
                                                                            refSpectra.NumPeaks,
-                                                                           (int) (refSpectra.Id ?? 0)));
+                                                                           (int) (refSpectra.Id ?? 0),
+                                                                           (int) (refSpectra.FileId ?? 0)));
 
                                 // Save entries in the redundant library.
                                 if (saveRedundantLib && redundantSpectraKeys.Count > 0)
@@ -800,6 +803,7 @@ namespace pwiz.Skyline.Model.Lib.BlibData
 
             refSpectra.Copies = copies;
             refSpectra.NumPeaks = (ushort) peaksInfo.Peaks.Length;
+            refSpectra.FileId = Array.IndexOf(dictFiles.Keys.ToArray(), spectrum.FileName) + 1;
 
             refSpectra.Peaks = new DbRefSpectraPeaks
                                    {

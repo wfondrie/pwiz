@@ -908,6 +908,9 @@
   <data name="IonMobilityValue_Mobility" xml:space="preserve">
     <value>离子迁移</value>
   </data>
+  <data name="IonMobilityValue_Units" xml:space="preserve">
+    <value>离子迁移单位</value>
+  </data>
   <data name="StaticMod_Label13C" xml:space="preserve">
     <value>13C</value>
   </data>

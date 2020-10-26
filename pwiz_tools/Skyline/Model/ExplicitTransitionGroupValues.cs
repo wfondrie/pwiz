@@ -19,6 +19,7 @@
 
 using pwiz.Common.Chemistry;
 using pwiz.Common.SystemUtil;
+using pwiz.Skyline.Model.DocSettings;
 
 namespace pwiz.Skyline.Model
 {
@@ -65,6 +66,14 @@ namespace pwiz.Skyline.Model
         public double? IonMobility { get; private set; } // For import formats with explicit values for DT
         [Track]
         public eIonMobilityUnits IonMobilityUnits { get; private set; } // For import formats with explicit values for DT
+
+        public IonMobilityAndCCS IonMobilityAndCCS
+        {
+            get
+            {
+                return IonMobilityAndCCS.GetIonMobilityAndCCS(IonMobility, IonMobilityUnits, CollisionalCrossSectionSqA, null );
+            }
+        }
 
         public double? CompensationVoltage { get { return Equals(IonMobilityUnits, eIonMobilityUnits.compensation_V) ? IonMobility : null; } } // For backward compatibility, back when we didn't have general ion mobility
 

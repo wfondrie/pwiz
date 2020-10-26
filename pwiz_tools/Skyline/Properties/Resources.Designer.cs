@@ -31499,11 +31499,29 @@ namespace pwiz.Skyline.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to CCS.
+        /// </summary>
+        public static string TransitionGroupTreeNode_RenderTip_CCS {
+            get {
+                return ResourceManager.GetString("TransitionGroupTreeNode_RenderTip_CCS", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Decoy Mass Shift.
         /// </summary>
         public static string TransitionGroupTreeNode_RenderTip_Decoy_Mass_Shift {
             get {
                 return ResourceManager.GetString("TransitionGroupTreeNode_RenderTip_Decoy_Mass_Shift", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IM.
+        /// </summary>
+        public static string TransitionGroupTreeNode_RenderTip_IM {
+            get {
+                return ResourceManager.GetString("TransitionGroupTreeNode_RenderTip_IM", resourceCulture);
             }
         }
         

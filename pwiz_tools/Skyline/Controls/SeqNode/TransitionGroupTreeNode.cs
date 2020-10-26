@@ -432,6 +432,7 @@ namespace pwiz.Skyline.Controls.SeqNode
                         FormatAdductTip(nodeGroup.TransitionGroup.PrecursorAdduct), rt);
                     customTable.AddDetailRow(Resources.TransitionGroupTreeNode_RenderTip_Precursor_mz,
                         string.Format(@"{0:F04}", nodeGroup.PrecursorMz), rt);
+                    AddTipIonMobilityDetails(nodeGroup, customTable, rt);
                     if (nodeGroup.CustomMolecule.Formula != null)
                     {
                         customTable.AddDetailRow(Resources.TransitionTreeNode_RenderTip_Formula,
@@ -495,6 +496,7 @@ namespace pwiz.Skyline.Controls.SeqNode
                 tableDetails.AddDetailRow(Resources.TransitionGroupTreeNode_RenderTip_Precursor_mh,
                                           string.Format(@"{0:F04}", nodeGroup.GetPrecursorIonMass()),
                                           rt);
+                AddTipIonMobilityDetails(nodeGroup, tableDetails, rt);
                 int? decoyMassShift = nodeGroup.TransitionGroup.DecoyMassShift;
                 if (decoyMassShift.HasValue)
                 {
@@ -589,6 +591,21 @@ namespace pwiz.Skyline.Controls.SeqNode
                 int width = (int) Math.Round(Math.Max(sizeDetails.Width, size.Width));
                 int height = (int) Math.Round(sizeDetails.Height + size.Height);
                 return new Size(width + 2, height + 2);
+            }
+        }
+
+        private static void AddTipIonMobilityDetails(TransitionGroupDocNode nodeGroup, TableDesc customTable, RenderTools rt)
+        {
+            if (nodeGroup.IonMobilityAndCCS.HasCollisionalCrossSection)
+            {
+                customTable.AddDetailRow(Resources.TransitionGroupTreeNode_RenderTip_CCS,
+                    string.Format(@"{0:F04}", nodeGroup.IonMobilityAndCCS.CollisionalCrossSectionSqA), rt);
+            }
+            else if (nodeGroup.IonMobilityAndCCS.HasIonMobilityValue)
+            {
+                customTable.AddDetailRow(Resources.TransitionGroupTreeNode_RenderTip_IM,
+                    string.Format(@"{0:F04}{1}", nodeGroup.IonMobilityAndCCS.IonMobility.Mobility,
+                        nodeGroup.IonMobilityAndCCS.IonMobility.UnitsString), rt);
             }
         }
 

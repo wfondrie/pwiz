@@ -667,6 +667,7 @@ namespace pwiz.Skyline.Model
                                                                     settings,
                                                                     explicitMods,
                                                                     nodeGroup.LibInfo,
+                                                                    nodeGroup.IonMobilityAndCCS,
                                                                     nodeGroup.ExplicitValues,
                                                                     null,   // results
                                                                     transitions,
@@ -1056,7 +1057,7 @@ namespace pwiz.Skyline.Model
                             var resultsNew = ConvertTransitionGroupChromInfoLibraryInfoToSmallMolecules(transitionGroupDocNode, mode, invertChargesMode);
                             var newTransitionGroupDocNode = new TransitionGroupDocNode(newTransitionGroup,
                                 transitionGroupDocNode.Annotations.Merge(note), document.Settings,
-                                null, libInfo, transitionGroupDocNode.ExplicitValues, resultsNew, null,
+                                null, libInfo, transitionGroupDocNode.IonMobilityAndCCS, transitionGroupDocNode.ExplicitValues, resultsNew, null,
                                 transitionGroupDocNode.AutoManageChildren);
                             var mzShiftPrecursor = invertCharges ? 2.0 * BioMassCalc.MassProton : 0;  // We removed hydrogen rather than added
                             var mzShiftFragment = invertCharges ? -2.0 * BioMassCalc.MassElectron : 0; // We will move proton masses to the fragment and use charge-only adducts
@@ -1472,6 +1473,7 @@ namespace pwiz.Skyline.Model
                                                                 document.Settings,
                                                                 mods,
                                                                 nodeGroup.LibInfo,
+                                                                nodeGroup.IonMobilityAndCCS,
                                                                 nodeGroup.ExplicitValues,
                                                                 nodeGroup.Results,
                                                                 decoyNodeTranList,

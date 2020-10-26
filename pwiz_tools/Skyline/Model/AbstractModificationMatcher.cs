@@ -447,13 +447,16 @@ namespace pwiz.Skyline.Model
 
         public abstract PeptideDocNode GetModifiedNode(string sequence);
 
-        public PeptideDocNode CreateDocNodeFromSettings(LibKey key, Peptide peptide, SrmSettingsDiff diff, out TransitionGroupDocNode nodeGroupMatched)
+        public PeptideDocNode CreateDocNodeFromSettings(LibKey key, Peptide peptide, SrmSettingsDiff diff, 
+            out TransitionGroupDocNode[] nodeGroupMatched) // Normally length 1, unless ion mobility multiple conformers are in use
         {
             if (key.LibraryKey is CrosslinkLibraryKey)
             {
                 return CreateCrosslinkDocNode(peptide, (CrosslinkLibraryKey) key.LibraryKey, diff,
                     out nodeGroupMatched);
             }
+
+            var ionMobilities = Settings.GetLibraryIonMobilities(key, ExplicitTransitionGroupValues.EMPTY);
             if (!key.Target.IsProteomic)
             {
                 // Scan the spectral lib entry for top N ranked (for now, that's just by intensity with high mz as tie breaker) fragments, 
@@ -464,23 +467,30 @@ namespace pwiz.Skyline.Model
                     if (nodePep != null && Settings.PeptideSettings.Libraries.TryGetLibInfo(key, out libInfo))
                     {
                         var isotopeLabelType = key.Adduct.HasIsotopeLabels ? IsotopeLabelType.heavy : IsotopeLabelType.light;
-                        var group = new TransitionGroup(peptide, key.Adduct, isotopeLabelType);
-                        nodeGroupMatched = new TransitionGroupDocNode(group, Annotations.EMPTY, Settings, null, libInfo, ExplicitTransitionGroupValues.EMPTY, null, null, false);
-                        SpectrumPeaksInfo spectrum;
-                        if (Settings.PeptideSettings.Libraries.TryLoadSpectrum(key, out spectrum))
+                        var nodes = new List<TransitionGroupDocNode>();
+                        foreach (var ionMobility in ionMobilities)
                         {
-                            // Add fragment and precursor transitions as needed
-                            var transitionDocNodes =
-                                Settings.TransitionSettings.Filter.SmallMoleculeIonTypes.Contains(IonType.precursor)
-                                    ? nodeGroupMatched.GetPrecursorChoices(Settings, null, true) // Gives list of precursors
-                                    : new List<DocNode>();
-
-                            if (Settings.TransitionSettings.Filter.SmallMoleculeIonTypes.Contains(IonType.custom))
+                            var group = new TransitionGroup(peptide, key.Adduct, isotopeLabelType);
+                            var node = new TransitionGroupDocNode(group, Annotations.EMPTY, Settings, null, libInfo,
+                                ionMobility, ExplicitTransitionGroupValues.EMPTY, null, null, false);
+                            SpectrumPeaksInfo spectrum;
+                            if (Settings.PeptideSettings.Libraries.TryLoadSpectrum(key, out spectrum))
                             {
-                                GetSmallMoleculeFragments(key, nodeGroupMatched, spectrum, transitionDocNodes);
+                                // Add fragment and precursor transitions as needed
+                                var transitionDocNodes =
+                                    Settings.TransitionSettings.Filter.SmallMoleculeIonTypes.Contains(IonType.precursor)
+                                        ? node.GetPrecursorChoices(Settings, null, true) // Gives list of precursors
+                                        : new List<DocNode>();
+
+                                if (Settings.TransitionSettings.Filter.SmallMoleculeIonTypes.Contains(IonType.custom))
+                                {
+                                    GetSmallMoleculeFragments(key, node, spectrum, transitionDocNodes);
+                                }
+                                node = (TransitionGroupDocNode)node.ChangeChildren(transitionDocNodes);
+                                nodes.Add(node);
                             }
-                            nodeGroupMatched = (TransitionGroupDocNode)nodeGroupMatched.ChangeChildren(transitionDocNodes);
-                            return (PeptideDocNode)nodePep.ChangeChildren(new List<DocNode>() { nodeGroupMatched });
+                            nodeGroupMatched = nodes.ToArray();
+                            return (PeptideDocNode)nodePep.ChangeChildren( nodeGroupMatched );
                         }
                     }
                 }
@@ -589,7 +599,7 @@ namespace pwiz.Skyline.Model
         }
 
         public PeptideDocNode CreateDocNodeFromSettings(Target target, Peptide peptide, SrmSettingsDiff diff,
-                out TransitionGroupDocNode nodeGroupMatched)
+                out TransitionGroupDocNode[] nodeGroupMatched) // Normally length 1, unless ion mobility multiple conformers are in use
         {
             if (!target.IsProteomic)
             {
@@ -639,7 +649,7 @@ namespace pwiz.Skyline.Model
 
         public PeptideDocNode CreateCrosslinkDocNode(Peptide peptide, CrosslinkLibraryKey crosslinkLibraryKey,
             SrmSettingsDiff diff,
-            out TransitionGroupDocNode nodeGroupMatched)
+            out TransitionGroupDocNode[] nodeGroupMatched)
         {
             if (!crosslinkLibraryKey.IsSupportedBySkyline())
             {
@@ -670,11 +680,13 @@ namespace pwiz.Skyline.Model
             var crosslinkedPeptide = mainPeptide.ChangeExplicitMods(newMods).ChangeSettings(Settings, diff ?? SrmSettingsDiff.ALL);
             if (!crosslinkLibraryKey.Adduct.IsEmpty)
             {
-                nodeGroupMatched = new TransitionGroupDocNode(
+
+                // N.B. no ion mobility support for crosslinking (yet?)
+                nodeGroupMatched = new[] { new TransitionGroupDocNode(
                     new TransitionGroup(mainPeptide.Peptide, crosslinkLibraryKey.Adduct, IsotopeLabelType.light),
                     Annotations.EMPTY,
-                    Settings, newMods, null, ExplicitTransitionGroupValues.EMPTY, null, null, true);
-                crosslinkedPeptide = (PeptideDocNode)crosslinkedPeptide.ChangeChildren(new DocNode[] { nodeGroupMatched });
+                    Settings, newMods, null, IonMobilityAndCCS.EMPTY,  ExplicitTransitionGroupValues.EMPTY, null, null, true)};
+                crosslinkedPeptide = (PeptideDocNode)crosslinkedPeptide.ChangeChildren( nodeGroupMatched );
             }
 
             return crosslinkedPeptide;
@@ -1055,11 +1067,10 @@ namespace pwiz.Skyline.Model
         }
 
         private PeptideDocNode CreateDocNodeFromSettings(Target seq, PeptideDocNode nodePep, SrmSettingsDiff diff,
-            out TransitionGroupDocNode nodeGroupMatched)
+            out TransitionGroupDocNode[] nodeGroupMatched)
         {
             PeptideDocNode nodePepMod = nodePep.ChangeSettings(Settings, diff ?? SrmSettingsDiff.ALL, false);
-            TransitionGroupDocNode nodeGroupMatchedFound;
-            if (IsMatch(seq, nodePepMod, out nodeGroupMatchedFound))
+            if (IsMatch(seq, nodePepMod, out var nodeGroupMatchedFound))
             {
                 nodeGroupMatched = nodeGroupMatchedFound;
                 return nodePepMod;
@@ -1068,7 +1079,7 @@ namespace pwiz.Skyline.Model
             return null;
         }
 
-        protected abstract bool IsMatch(Target seq, PeptideDocNode nodePep, out TransitionGroupDocNode nodeGroup);
+        protected abstract bool IsMatch(Target seq, PeptideDocNode nodePep, out TransitionGroupDocNode[] nodeGroup);
 
         public PeptideDocNode CreateDocNodeFromMatches(PeptideDocNode nodePep, IEnumerable<AAModInfo> infos)
         {

@@ -39,7 +39,7 @@ namespace pwiz.Skyline.SettingsUI
         private Adduct _resultAdduct;
         private readonly FormulaBox _formulaBox;
         private readonly Identity _initialId;
-        private readonly IEnumerable<Identity> _existingIds;
+        private readonly IEnumerable<DocNode> _existingIds;
         private readonly int _minCharge;
         private readonly int _maxCharge;
         private readonly TransitionSettings _transitionSettings;
@@ -71,7 +71,7 @@ namespace pwiz.Skyline.SettingsUI
         /// Null values imply "don't ask user for this"
         /// </summary>
         public EditCustomMoleculeDlg(SkylineWindow parent, UsageMode usageMode, string title, Identity initialId,
-            IEnumerable<Identity> existingIds, int minCharge, int maxCharge,
+            IEnumerable<DocNode> existingIds, int minCharge, int maxCharge,
             SrmSettings settings, CustomMolecule molecule, Adduct defaultCharge,
             ExplicitTransitionGroupValues explicitTransitionGroupAttributes,
             ExplicitTransitionValues explicitTransitionAttributes,
@@ -732,15 +732,18 @@ namespace pwiz.Skyline.SettingsUI
                 }
             }
 
-            // See if this combination of charge and label would conflict with any existing transition groups
+            // See if this combination of charge and label and ion mobility would conflict with any existing transition groups
             if (_existingIds != null && _existingIds.Any(t =>
             {
-                var transitionGroup = t as TransitionGroup;
-                return transitionGroup != null && Equals(transitionGroup.LabelType, IsotopeLabelType) &&
-                       Equals(transitionGroup.PrecursorAdduct.AsFormula(),
+                var groupDocNode = t as TransitionGroupDocNode;
+                return groupDocNode != null && Equals(groupDocNode.LabelType, IsotopeLabelType) &&
+                       Equals(groupDocNode.PrecursorAdduct.AsFormula(),
                            Adduct
                                .AsFormula()) && // Compare AsFormula so proteomic and non-proteomic protonation are seen as same thing
-                       !ReferenceEquals(t, _initialId);
+                       (Equals(groupDocNode.IonMobilityAndCCS.CollisionalCrossSectionSqA, CollisionalCrossSectionSqA) ||
+                        (Equals(groupDocNode.IonMobilityAndCCS.IonMobility.Mobility, IonMobility) &&
+                         Equals(groupDocNode.IonMobilityAndCCS.IonMobility.Units, IonMobilityUnits))) &&
+                       !ReferenceEquals(groupDocNode.TransitionGroup, _initialId);
             }))
             {
                 helper.ShowTextBoxError(textName,
@@ -753,10 +756,10 @@ namespace pwiz.Skyline.SettingsUI
             // See if this would conflict with any existing transitions
             if (_existingIds != null && (_existingIds.Any(t =>
             {
-                var transition = t as Transition;
-                return transition != null && (Equals(transition.Adduct.AsFormula(), Adduct.AsFormula()) &&
-                                              Equals(transition.CustomIon, ResultCustomMolecule)) &&
-                       !ReferenceEquals(t, _initialId);
+                var transitionDocNode = t as TransitionDocNode;
+                return transitionDocNode != null && (Equals(transitionDocNode.Adduct.AsFormula(), Adduct.AsFormula()) &&
+                                              Equals(transitionDocNode.CustomIon, ResultCustomMolecule)) &&
+                       !ReferenceEquals(transitionDocNode.Transition, _initialId);
             })))
             {
                 helper.ShowTextBoxError(textName,

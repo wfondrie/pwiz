@@ -932,6 +932,9 @@
   <data name="IonMobilityValue_Mobility" xml:space="preserve">
     <value>Ion Mobility</value>
   </data>
+  <data name="IonMobilityValue_Units" xml:space="preserve">
+    <value>Ion mobility units</value>
+  </data>
   <data name="StaticMod_Label13C" xml:space="preserve">
     <value>13C</value>
   </data>
@@ -1225,6 +1228,9 @@
   </data>
   <data name="TransitionGroupDocNode_LabelType" xml:space="preserve">
     <value>Isotope label type</value>
+  </data>
+  <data name="TransitionGroupDocNode_LibraryIonMobility" xml:space="preserve">
+    <value>Library ion mobility</value>
   </data>
   <data name="TransitionGroupDocNode_PrecursorConcentration" xml:space="preserve">
     <value>Precursor concentration</value>

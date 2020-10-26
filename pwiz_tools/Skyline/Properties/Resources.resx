@@ -3148,6 +3148,12 @@ Are you sure you want to continue?</value>
   <data name="TransitionGroupTreeNode_RenderTip_Precursor_mz" xml:space="preserve">
     <value>Precursor m/z</value>
   </data>
+  <data name="TransitionGroupTreeNode_RenderTip_CCS" xml:space="preserve">
+    <value>CCS</value>
+  </data>
+  <data name="TransitionGroupTreeNode_RenderTip_IM" xml:space="preserve">
+    <value>IM</value>
+  </data>
   <data name="RegressionUnconversion_CalculatorScoreValueFormat" xml:space="preserve">
     <value>{0} Score ({1})</value>
   </data>

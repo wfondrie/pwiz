@@ -346,7 +346,7 @@ namespace pwiz.Skyline.Model
                     continue;
                 var tranGroupOther = new TransitionGroup(Peptide, PrecursorAdduct, labelType, false, DecoyMassShift);
                 var nodeGroupOther = new TransitionGroupDocNode(tranGroupOther, Annotations.EMPTY, settings, mods,
-                    libInfo, ExplicitTransitionGroupValues.EMPTY, null, new TransitionDocNode[0], false);
+                    libInfo, IonMobilityAndCCS.EMPTY, ExplicitTransitionGroupValues.EMPTY, null, new TransitionDocNode[0], false);
 
                 listOtherTypes.Add(new Tuple<TransitionGroupDocNode, IFragmentMassCalc>(nodeGroupOther, calc));
             }

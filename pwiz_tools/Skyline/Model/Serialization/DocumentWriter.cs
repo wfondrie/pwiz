@@ -198,6 +198,24 @@ namespace pwiz.Skyline.Model.Serialization
         }
 
         /// <summary>
+        /// Serialize any attributes describing ion mobility for this transition
+        /// </summary>
+        private void WriteIonMobilityAttributes(XmlWriter writer, IonMobilityAndCCS ionMobilityAndCCS)
+        {
+            if (ionMobilityAndCCS == null || ionMobilityAndCCS.IsEmpty)
+            {
+                return;
+            }
+            writer.WriteAttributeNullable(ATTR.ccs, ionMobilityAndCCS.CollisionalCrossSectionSqA);
+            if (ionMobilityAndCCS.HasIonMobilityValue)
+            {
+                writer.WriteAttributeNullable(ATTR.ion_mobility, ionMobilityAndCCS.IonMobility.Mobility);
+                writer.WriteAttributeNullable(ATTR.ion_mobility_high_energy_offset, ionMobilityAndCCS.HighEnergyIonMobilityValueOffset);
+                writer.WriteAttribute(ATTR.ion_mobility_type, ionMobilityAndCCS.IonMobility.Units.ToString());
+            }
+        }
+
+        /// <summary>
         /// Serializes the contents of a single <see cref="PeptideDocNode"/>
         /// to XML.
         /// </summary>
@@ -476,6 +494,10 @@ namespace pwiz.Skyline.Model.Serialization
                 writer.WriteAttribute(ATTR.calc_neutral_mass, node.GetPrecursorIonPersistentNeutralMass());
             }
             writer.WriteAttribute(ATTR.precursor_mz, SequenceMassCalc.PersistentMZ(node.PrecursorMz));
+            if (DocumentFormat >= DocumentFormat.MULTIPLE_CONFORMERS) // Format supports per-precursor ion mobility library values for multiple conformers?
+            {
+                WriteIonMobilityAttributes(writer, node.IonMobilityAndCCS);
+            }
             WriteExplicitTransitionGroupValuesAttributes(writer, node.ExplicitValues);
 
             writer.WriteAttribute(ATTR.auto_manage_children, node.AutoManageChildren, true);

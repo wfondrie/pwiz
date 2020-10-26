@@ -81,6 +81,7 @@ namespace pwiz.Skyline.Model
 
         [TrackChildren(ignoreName:true, defaultValues:typeof(DefaultValuesNull))]
         public CustomIon CustomIon { get { return Transition.CustomIon; } }
+        public Adduct Adduct { get { return Transition.Adduct; } }
 
         public ComplexFragmentIon ComplexFragmentIon { get; private set; }
 

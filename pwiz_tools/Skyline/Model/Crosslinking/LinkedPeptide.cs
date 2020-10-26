@@ -68,7 +68,7 @@ namespace pwiz.Skyline.Model.Crosslinking
 
         public TransitionGroupDocNode GetTransitionGroupDocNode(SrmSettings settings, IsotopeLabelType labelType, Adduct adduct) {
             var transitionGroup = GetTransitionGroup(labelType, adduct);
-            var transitionGroupDocNode = new TransitionGroupDocNode(transitionGroup, Annotations.EMPTY, settings, ExplicitMods, null, ExplicitTransitionGroupValues.EMPTY, null, null, false);
+            var transitionGroupDocNode = new TransitionGroupDocNode(transitionGroup, Annotations.EMPTY, settings, ExplicitMods, null, IonMobilityAndCCS.EMPTY, ExplicitTransitionGroupValues.EMPTY, null, null, false);
             return transitionGroupDocNode;
         }
 

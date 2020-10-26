@@ -284,6 +284,7 @@ namespace pwiz.SkylineTestUtil
                         viewEditor.ViewName = newViewName ?? viewName;
                         viewEditor.OkDialog();
                     });
+PauseTest();
                 WaitForCondition(() => (documentGrid.RowCount == (expectedRowsFinal??expectedRowsInitial))); // Let it initialize
             }
         }

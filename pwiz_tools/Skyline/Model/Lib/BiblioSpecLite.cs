@@ -461,7 +461,8 @@ namespace pwiz.Skyline.Model.Lib
             copies,
             numPeaks,
             score,
-            scoreType
+            scoreType,
+            fileID
         }
 
         private enum RefSpectraPeaks
@@ -682,6 +683,7 @@ namespace pwiz.Skyline.Model.Lib
                 using (SQLiteDataReader reader = select.ExecuteReader())
                 {
                     int iId = reader.GetOrdinal(RefSpectra.id);
+                    int iFileId = reader.GetOrdinal(RefSpectra.fileID);
                     //int iSeq = reader.GetOrdinal(RefSpectra.peptideSeq);
                     int iModSeq = reader.GetOrdinal(RefSpectra.peptideModSeq);
                     int iCharge = reader.GetOrdinal(RefSpectra.precursorCharge);
@@ -713,7 +715,7 @@ namespace pwiz.Skyline.Model.Lib
                         }
 
                         int id = reader.GetInt32(iId);
-
+                        int fileId = iFileId < 0 || reader.IsDBNull(iFileId) ? -1 : reader.GetInt32(iFileId);
                         string sequence = reader.GetString(iModSeq);
                         int charge = reader.GetInt16(iCharge);
                         string adduct = iAdduct >= 0 && !reader.IsDBNull(iAdduct) ? reader.GetString(iAdduct) : null;
@@ -785,7 +787,7 @@ namespace pwiz.Skyline.Model.Lib
                                 scoreTypesById.TryGetValue(scoreType.Value, out scoreName);
                             }
 
-                            libraryEntries.Add(new BiblioLiteSpectrumInfo(key, copies, numPeaks, id,
+                            libraryEntries.Add(new BiblioLiteSpectrumInfo(key, copies, numPeaks, id, fileId,
                                 retentionTimesByFileId, driftTimesByFileId, peakBoundariesByFileId, score, scoreName));
                         }
                     }
@@ -822,7 +824,8 @@ namespace pwiz.Skyline.Model.Lib
                         info.Key.Write(outStream);
                         outStream.Write(BitConverter.GetBytes(info.Copies), 0, sizeof (int));
                         outStream.Write(BitConverter.GetBytes(info.NumPeaks), 0, sizeof (int));
-                        outStream.Write(BitConverter.GetBytes(info.Id), 0, sizeof (int));
+                        outStream.Write(BitConverter.GetBytes(info.Id), 0, sizeof(int));
+                        outStream.Write(BitConverter.GetBytes(info.RefSpectraFileId), 0, sizeof(int));
                         if (info.ScoreType == null || !scoreTypesByName.TryGetValue(info.ScoreType, out var scoreType))
                         {
                             scoreType = -1;
@@ -1054,6 +1057,7 @@ namespace pwiz.Skyline.Model.Lib
                         int copies = PrimitiveArrays.ReadOneValue<int>(stream);
                         int numPeaks = PrimitiveArrays.ReadOneValue<int>(stream);
                         int id = PrimitiveArrays.ReadOneValue<int>(stream);
+                        int fileId = PrimitiveArrays.ReadOneValue<int>(stream);
                         var scoreTypeId = PrimitiveArrays.ReadOneValue<int>(stream);
                         var score = (double?) PrimitiveArrays.ReadOneValue<double>(stream);
                         if (!scoreTypes.TryGetValue(scoreTypeId, out var scoreType))
@@ -1065,7 +1069,7 @@ namespace pwiz.Skyline.Model.Lib
                         ImmutableSortedList<int, ExplicitPeakBounds> peakBoundaries =
                             ReadPeakBoundaries(stream);
                         _anyExplicitPeakBounds = _anyExplicitPeakBounds || peakBoundaries.Count > 0;
-                        libraryEntries[i] = new BiblioLiteSpectrumInfo(key, copies, numPeaks, id,
+                        libraryEntries[i] = new BiblioLiteSpectrumInfo(key, copies, numPeaks, id, fileId,
                             retentionTimesByFileId, driftTimesByFileId, peakBoundaries, score, scoreType);
                     }
 
@@ -1554,6 +1558,11 @@ namespace pwiz.Skyline.Model.Lib
 
         public override bool TryGetIonMobilityInfos(LibKey[] targetIons, MsDataFileUri filePath, out LibraryIonMobilityInfo ionMobilities)
         {
+            if (filePath == null)
+            {
+                ionMobilities = null;
+                return false;
+            }
             return TryGetIonMobilityInfos(targetIons, FindSource(filePath), out ionMobilities);
         }
 
@@ -1606,7 +1615,8 @@ namespace pwiz.Skyline.Model.Lib
                 var ionMobilitiesDict = new Dictionary<LibKey, IonMobilityAndCCS[]>();
                 foreach (var target in targetIons)
                 {
-                    foreach (var matchedItem in _libraryEntries.ItemsMatching(target, true))
+                    var targetMatches = _libraryEntries.ItemsMatching(target, true);
+                    foreach (var matchedItem in targetMatches)
                     {
                         var matchedTarget = matchedItem.Key;
                         var match = matchedItem.IonMobilitiesByFileId.AllValuesSorted;
@@ -1620,7 +1630,12 @@ namespace pwiz.Skyline.Model.Lib
                         }
                         else
                         {
-                            ionMobilitiesDict[matchedTarget] = match;
+                            var mobilitiesForRefSpectrum =
+                                matchedItem.IonMobilitiesByFileId.GetIonMobilityInfo(matchedItem.RefSpectraFileId);
+                            if (mobilitiesForRefSpectrum != null)
+                            {
+                                ionMobilitiesDict[matchedTarget] = mobilitiesForRefSpectrum;
+                            }
                         }
                     }
                 }
@@ -2483,13 +2498,13 @@ namespace pwiz.Skyline.Model.Lib
 
     public struct BiblioLiteSpectrumInfo : ICachedSpectrumInfo
     {
-        public BiblioLiteSpectrumInfo(LibKey key, int copies, int numPeaks, int id)
-            : this(key, copies, numPeaks, id, default(IndexedRetentionTimes), default(IndexedIonMobilities), 
+        public BiblioLiteSpectrumInfo(LibKey key, int copies, int numPeaks, int id, int refSpectraFileId)
+            : this(key, copies, numPeaks, id, refSpectraFileId, default(IndexedRetentionTimes), default(IndexedIonMobilities), 
             ImmutableSortedList<int, ExplicitPeakBounds>.EMPTY, null, null)
         {
         }
 
-        public BiblioLiteSpectrumInfo(LibKey key, int copies, int numPeaks, int id,
+        public BiblioLiteSpectrumInfo(LibKey key, int copies, int numPeaks, int id, int refSpectraFileId,
             IndexedRetentionTimes retentionTimesByFileId, IndexedIonMobilities ionMobilitiesByFileId,
             ImmutableSortedList<int, ExplicitPeakBounds> peakBoundaries, double? score, string scoreType)
         {
@@ -2497,6 +2512,7 @@ namespace pwiz.Skyline.Model.Lib
             Copies = copies;
             NumPeaks = numPeaks;
             Id = id;
+            RefSpectraFileId = refSpectraFileId;
             RetentionTimesByFileId = retentionTimesByFileId;
             IonMobilitiesByFileId = ionMobilitiesByFileId;
             PeakBoundariesByFileId = peakBoundaries;
@@ -2509,6 +2525,7 @@ namespace pwiz.Skyline.Model.Lib
         public int Copies { get; }
         public int NumPeaks { get; }
         public int Id { get; }
+        public int RefSpectraFileId { get; } // File ID declared in RefSpectra table for this key
         public IndexedRetentionTimes RetentionTimesByFileId { get; }
         public IndexedIonMobilities IonMobilitiesByFileId { get; }
         public ImmutableSortedList<int, ExplicitPeakBounds> PeakBoundariesByFileId { get; }

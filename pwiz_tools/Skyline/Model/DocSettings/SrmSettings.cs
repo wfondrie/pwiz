@@ -918,6 +918,29 @@ namespace pwiz.Skyline.Model.DocSettings
             return false;
         }
 
+        static IonMobilityAndCCS[] CCS_VALUES_EMPTY = { IonMobilityAndCCS.EMPTY };
+
+        /// <summary>
+        /// Returns an array of ion mobility values, guaranteed to contain at least IonMobilityAndCCS.EMPTY.
+        /// This supports the "multiple conformers" case where an ion may have multiple ion mobilities
+        /// </summary>
+        public IonMobilityAndCCS[] GetLibraryIonMobilities(LibKey libKey, ExplicitTransitionGroupValues explicitValues)
+        {
+            // Explicit value wins
+            if (explicitValues.IonMobilityAndCCS.IsEmpty)
+                return new []{ explicitValues.IonMobilityAndCCS };
+
+            // Ion mobility library values have second priority, spectral library values have third priority
+            var mobilities = GetIonMobilities(new[] {libKey}, null);
+            if (!mobilities.IsEmpty)
+            {
+                return mobilities.GetIonMobilityDict()[libKey];
+            }
+
+            // No CCS found
+            return CCS_VALUES_EMPTY;
+        }
+
         /// <summary>
         /// Get ion mobility for the charged peptide from ion mobility library, or,
         /// failing that, from the provided spectral library if it has ion mobility values.
@@ -1275,7 +1298,14 @@ namespace pwiz.Skyline.Model.DocSettings
             return GetRetentionTimes(new MsDataFilePath(name));
         }
 
-        public LibraryIonMobilityInfo GetIonMobilities(LibKey[] targetIons, MsDataFileUri filePath)
+        /// <summary>
+        /// Retrieve ion mobility values for the indicated ions,
+        /// from .imsdb file if possible, or spectral libraries if need be
+        /// </summary>
+        /// <param name="targetIons">The ions whose ion mobility we seek</param>
+        /// <param name="fileUri">Path to a raw data file which contains calibration. Can be null, in which case no CCS->IM conversion occurs.</param>
+        /// <returns></returns>
+        public LibraryIonMobilityInfo GetIonMobilities(LibKey[] targetIons, MsDataFileUri fileUri)
         {
             // Look in ion mobility library (.imsdb) if available, then fill gaps with spectral libs if requested
             var imFiltering = TransitionSettings.IonMobilityFiltering;
@@ -1297,7 +1327,7 @@ namespace pwiz.Skyline.Model.DocSettings
                 if (dict.Count < targetIons.Length && imFiltering.UseSpectralLibraryIonMobilityValues)
                 {
                     var libraries = PeptideSettings.Libraries;
-                    if (libraries.TryGetSpectralLibraryIonMobilities(targetIons, filePath, out var ionMobilities) && ionMobilities != null)
+                    if (libraries.TryGetSpectralLibraryIonMobilities(targetIons, fileUri, out var ionMobilities) && ionMobilities != null)
                     {
                         foreach (var im in ionMobilities.GetIonMobilityDict().Where(item => 
                             !map.TryGetValue(item.Key, out _)))
@@ -1308,7 +1338,7 @@ namespace pwiz.Skyline.Model.DocSettings
                 }
 
                 return dict.Count > 0
-                    ? new LibraryIonMobilityInfo(filePath.GetFilePath(), true, dict)
+                    ? new LibraryIonMobilityInfo(fileUri?.GetFilePath(), true, dict)
                     : LibraryIonMobilityInfo.EMPTY;
             }
             return null;
@@ -1941,6 +1971,13 @@ namespace pwiz.Skyline.Model.DocSettings
                         .IonMobilityFiltering))).ChangeTransitionSettings(
                     result.TransitionSettings.ChangeIonMobilityFiltering(TransitionIonMobilityFiltering.EMPTY));
             }
+
+/* TODO(bspratt)
+            if (documentFormat < DocumentFormat.MULTIPLE_CONFORMERS && result.HasMultipleConformers)
+            {
+                refuse?  discard all but first conformer?
+            }
+*/
 
             return result;
         }
@@ -2603,8 +2640,19 @@ namespace pwiz.Skyline.Model.DocSettings
             // If the library loded state has changed, make sure the library properties are up to date,
             // but avoid changing the chosen transitions.
             // CONSIDER: The way library transition ranking is currently implemented makes this too slow
-//            if (!DiffTransitionGroupProps && libraryChange && newLib.IsLoaded && !oldLib.IsLoaded)
-//                DiffTransitionGroupProps = true;
+            //            if (!DiffTransitionGroupProps && libraryChange && newLib.IsLoaded && !oldLib.IsLoaded)
+            //                DiffTransitionGroupProps = true;
+
+            // Ion mobility filtering changes may require us to add or remove TransitionGroups in case of multiple conformers,
+            // or at least update ion mobility values in TransitionGroupDocNodes. Note we don't care about window width here,
+            // that's an extraction time concern
+            // CONSIDER - force reimport of results when IM values change? (i.e. set DiffResults)
+            DiffIonMobilityLibraryValues = 
+                !Equals(newTran.IonMobilityFiltering.IonMobilityLibrary, oldTran.IonMobilityFiltering.IonMobilityLibrary) ||
+                !Equals(newTran.IonMobilityFiltering.UseSpectralLibraryIonMobilityValues, oldTran.IonMobilityFiltering.UseSpectralLibraryIonMobilityValues) ||
+                (newTran.IonMobilityFiltering.UseSpectralLibraryIonMobilityValues && diffLibraries);
+            // A change in ion mobility library can mean a change in TransitionGroupDocNode values, or even creation/deletion of TransitionGroup IDs
+            DiffTransitionGroupProps |= DiffIonMobilityLibraryValues;
 
             // Any change in modifications or fragment mass-type forces a recalc
             // of transition m/z values, as
@@ -2729,6 +2777,7 @@ namespace pwiz.Skyline.Model.DocSettings
         public bool DiffExplicit { get; private set; }
         public bool DiffTransitionGroups { get; private set; }
         public bool DiffTransitionGroupProps { get; private set; }
+        public bool DiffIonMobilityLibraryValues { get; private set; } // Changes that require rescanning libraries for ion mobility information 
         public bool DiffTransitions { get; private set; }
         public bool DiffTransitionProps { get; private set; }
         public bool DiffResults { get; private set; }
