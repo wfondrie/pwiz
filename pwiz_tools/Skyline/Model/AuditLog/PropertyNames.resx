@@ -1583,4 +1583,7 @@
   <data name="QuantificationSettings_QualitativeIonRatioThreshold">
     <value>Qualitative ion ratio threshold</value>
   </data>
+  <data name="QuantificationSettings_SimpleRatios">
+    <value>Simple ratios</value>
+  </data>
 </root>
