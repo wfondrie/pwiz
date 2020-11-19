@@ -33,6 +33,8 @@ namespace pwiz.Common.DataBinding.Layout
             RowTransforms = ImmutableList<IRowTransform>.EMPTY;
         }
         public string Name { get; private set; }
+
+
         public ImmutableList<Tuple<ColumnId, ColumnFormat>> ColumnFormats { get; private set; }
 
         public ViewLayout ChangeColumnFormats(IEnumerable<Tuple<ColumnId, ColumnFormat>> formats)
@@ -45,6 +47,12 @@ namespace pwiz.Common.DataBinding.Layout
         public ViewLayout ChangeRowTransforms(IEnumerable<IRowTransform> rowTransforms)
         {
             return ChangeProp(ImClone(this), im => im.RowTransforms = ImmutableList.ValueOf(rowTransforms));
+        }
+        public bool HierarchicalCluster { get; private set; }
+
+        public ViewLayout ChangeHierarchicalCluster(bool hierarchicalCluster)
+        {
+            return ChangeProp(ImClone(this), im => im.HierarchicalCluster = hierarchicalCluster);
         }
 
         public string AuditLogText
@@ -60,6 +68,7 @@ namespace pwiz.Common.DataBinding.Layout
         protected bool Equals(ViewLayout other)
         {
             return string.Equals(Name, other.Name) && 
+                   Equals(HierarchicalCluster, other.HierarchicalCluster) &&
                    Equals(ColumnFormats, other.ColumnFormats) && Equals(RowTransforms, other.RowTransforms);
         }
 
@@ -86,6 +95,10 @@ namespace pwiz.Common.DataBinding.Layout
         public void WriteXml(XmlWriter writer)
         {
             writer.WriteAttributeString("name", Name);
+            if (HierarchicalCluster)
+            {
+                writer.WriteAttributeString("cluster", "true");
+            }
             foreach (var columnFormat in ColumnFormats)
             {
                 writer.WriteStartElement("columnFormat");
@@ -125,6 +138,11 @@ namespace pwiz.Common.DataBinding.Layout
         public static ViewLayout ReadXml(XmlReader reader)
         {
             var viewLayout = new ViewLayout(reader.GetAttribute("name"));
+            bool cluster = "true".Equals(reader.GetAttribute("cluster"));
+            if (cluster)
+            {
+                viewLayout = viewLayout.ChangeHierarchicalCluster(true);
+            }
             if (reader.IsEmptyElement)
             {
                 reader.ReadElementString("layout");

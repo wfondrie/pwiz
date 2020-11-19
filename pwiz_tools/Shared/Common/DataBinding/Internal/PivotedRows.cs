@@ -18,6 +18,7 @@
  */
 using System.Collections.Generic;
 using pwiz.Common.Collections;
+using pwiz.Common.DataBinding.Clustering;
 using pwiz.Common.SystemUtil;
 
 namespace pwiz.Common.DataBinding.Internal
@@ -40,5 +41,8 @@ namespace pwiz.Common.DataBinding.Internal
             return ChangeProp(ImClone(this), im => im.RowItems = ImmutableList.ValueOf(rowItems));
         }
         public ImmutableList<DataPropertyDescriptor> ItemProperties { get; private set; }
+
+        public ImmutableList<ColumnCluster> ColumnClusters { get; private set; }
+
     }
 }

@@ -102,6 +102,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="alglibnet2, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Shared\Lib\alglib\alglibnet2.dll</HintPath>
+    </Reference>
     <Reference Include="log4net">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Shared\Lib\log4net.dll</HintPath>
@@ -140,6 +144,9 @@
     <Compile Include="BilinearCurveFitTest.cs" />
     <Compile Include="BookmarkEnumeratorTest.cs" />
     <Compile Include="ChromatogramExporterTest.cs" />
+    <Compile Include="HierarchicalClustering\DataboundHierarchicalClusteringTest.cs" />
+    <Compile Include="HierarchicalClustering\HierarchicalClusteringTest.cs" />
+    <Compile Include="KMeansTest.cs" />
     <Compile Include="ObjectSizeTest.cs" />
     <Compile Include="ChromPeakTest.cs" />
     <Compile Include="ChromTransitionTest.cs" />
@@ -268,6 +275,8 @@
     <EmbeddedResource Include="explicit-losses.sky" />
     <EmbeddedResource Include="DocumentSerializerTest.sky" />
     <None Include="FullScanPrecursor.zip" />
+    <EmbeddedResource Include="HierarchicalClustering\NormalizedAreas.csv" />
+    <EmbeddedResource Include="HierarchicalClustering\Rat_plasma.sky" />
     <None Include="LibraryRankedSpectrumInfoSpeedTest.zip" />
     <None Include="modmatch.sky" />
     <None Include="ModMatch.zip" />
@@ -335,6 +344,7 @@
     <EmbeddedResource Include="UniModHeavyList.xml" />
     <EmbeddedResource Include="UniModStaticList.xml" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -53,6 +53,7 @@
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.navBarButtonCopyAll = new System.Windows.Forms.ToolStripButton();
             this.navBarButtonActions = new System.Windows.Forms.ToolStripDropDownButton();
+            this.navBarBtnCluster = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.bindingNavigator1)).BeginInit();
             this.bindingNavigator1.SuspendLayout();
             this.SuspendLayout();
@@ -173,6 +174,7 @@
             this.bindingNavigator1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.navBarButtonViews,
             this.btnGroupTotal,
+            this.navBarBtnCluster,
             this.bindingNavigatorMoveFirstItem,
             this.bindingNavigatorMovePreviousItem,
             this.bindingNavigatorSeparator,
@@ -228,6 +230,12 @@
             this.navBarButtonActions.Name = "navBarButtonActions";
             this.navBarButtonActions.DropDownOpening += new System.EventHandler(this.navBarButtonActions_DropDownOpening);
             // 
+            // navBarBtnCluster
+            // 
+            this.navBarBtnCluster.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            resources.ApplyResources(this.navBarBtnCluster, "navBarBtnCluster");
+            this.navBarBtnCluster.Name = "navBarBtnCluster";
+            // 
             // NavBar
             // 
             resources.ApplyResources(this, "$this");
@@ -267,5 +275,6 @@
         private System.Windows.Forms.ToolStripButton navBarButtonCopyAll;
         private System.Windows.Forms.ToolStripSplitButton btnGroupTotal;
         private System.Windows.Forms.ToolStripDropDownButton navBarButtonActions;
+        private System.Windows.Forms.ToolStripButton navBarBtnCluster;
     }
 }

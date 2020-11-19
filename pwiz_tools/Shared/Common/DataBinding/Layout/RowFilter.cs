@@ -165,6 +165,13 @@ namespace pwiz.Common.DataBinding.Layout
             return value.ToLower().IndexOf(_normalizedText, StringComparison.Ordinal) >= 0;
         }
 
+        public bool Cluster { get; private set; }
+
+        public RowFilter ChangeCluster(bool cluster)
+        {
+            return ChangeProp(ImClone(this), im => im.Cluster = cluster);
+        }
+
         public bool Equals(RowFilter other)
         {
             if (ReferenceEquals(null, other)) return false;

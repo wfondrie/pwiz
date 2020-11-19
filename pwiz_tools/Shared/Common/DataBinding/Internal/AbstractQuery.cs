@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
+using pwiz.Common.DataBinding.Clustering;
 using pwiz.Common.DataBinding.Layout;
 
 namespace pwiz.Common.DataBinding.Internal
@@ -33,6 +34,13 @@ namespace pwiz.Common.DataBinding.Internal
             var pivotedRows = Pivot(cancellationToken, results);
             var dataSchema = results.Parameters.ViewInfo.DataSchema;
             var transformedRows = Transform(cancellationToken, dataSchema, new TransformResults(null, null, pivotedRows), results.Parameters.TransformStack);
+            var clusterer = new Clusterer(transformedRows.PivotedRows.ItemProperties);
+            var rowClusterResult = clusterer.ClusterRows(transformedRows.PivotedRows.RowItems);
+            if (rowClusterResult != null)
+            {
+                pivotedRows = new PivotedRows(rowClusterResult.Item1, transformedRows.PivotedRows.ItemProperties);
+                transformedRows = new TransformResults(transformedRows.Parent, transformedRows.RowTransform, pivotedRows);
+            }
             return results.ChangeTransformResults(transformedRows);
         }
 

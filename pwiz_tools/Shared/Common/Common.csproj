@@ -55,6 +55,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="alglibnet2">
+      <HintPath>..\Lib\alglib\alglibnet2.dll</HintPath>
+    </Reference>
     <Reference Include="Iesi.Collections">
       <HintPath>..\Lib\NHibernate\Iesi.Collections.dll</HintPath>
     </Reference>
@@ -89,6 +92,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\Clustering\ClusteredBoundDataGridView.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\Clustering\DataboundClusteringControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\Clustering\DataboundClusteringControl.Designer.cs">
+      <DependentUpon>DataboundClusteringControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\Clustering\Dendrogram.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\Clustering\Dendrogram.Designer.cs">
+      <DependentUpon>Dendrogram.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\CommonDataGridView.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -112,6 +130,7 @@
       <DependentUpon>RecordNavBar.cs</DependentUpon>
     </Compile>
     <Compile Include="Controls\ColumnLimitExceededColumn.cs" />
+    <Compile Include="DataAnalysis\Clustering\HierarchicalCluster.cs" />
     <Compile Include="DataAnalysis\LinearFitResult.cs" />
     <Compile Include="DataAnalysis\FoldChange\FoldChangeDataSet.cs" />
     <Compile Include="DataAnalysis\FoldChange\DesignMatrix.cs" />
@@ -144,6 +163,10 @@
     <Compile Include="DataBinding\Attributes\UiModeAttribute.cs" />
     <Compile Include="DataBinding\Attributes\HiddenAttribute.cs" />
     <Compile Include="DataBinding\ChainedPropertyDescriptor.cs" />
+    <Compile Include="DataBinding\Clustering\Clusterer.cs" />
+    <Compile Include="DataBinding\Clustering\ClusterMergeIndices.cs" />
+    <Compile Include="DataBinding\Clustering\ClusteredRows.cs" />
+    <Compile Include="DataBinding\Clustering\ColumnCluster.cs" />
     <Compile Include="DataBinding\CollectionInfo.cs" />
     <Compile Include="DataBinding\ColumnFormats.cs" />
     <Compile Include="DataBinding\ColumnSelector.cs" />
@@ -330,6 +353,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Controls\Clustering\DataboundClusteringControl.resx">
+      <DependentUpon>DataboundClusteringControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\FindBox.ja.resx">
       <DependentUpon>FindBox.cs</DependentUpon>
     </EmbeddedResource>
@@ -546,6 +572,7 @@
       <Name>CommonUtil</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

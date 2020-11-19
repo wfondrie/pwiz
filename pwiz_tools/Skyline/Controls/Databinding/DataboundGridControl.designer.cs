@@ -45,9 +45,9 @@
             this.clearAllFiltersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.formatToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.fillDownToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.boundDataGridView = new pwiz.Skyline.Controls.Databinding.BoundDataGridViewEx();
-            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             ((System.ComponentModel.ISupportInitialize)(this.bindingListSource)).BeginInit();
             this.contextMenuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.boundDataGridView)).BeginInit();
@@ -62,6 +62,7 @@
             // 
             // bindingListSource
             // 
+            this.bindingListSource.NewRowHandler = null;
             this.bindingListSource.DataError += new System.Windows.Forms.BindingManagerDataErrorEventHandler(this.bindingListSource_DataError);
             // 
             // contextMenuStrip
@@ -134,6 +135,11 @@
             resources.ApplyResources(this.formatToolStripMenuItem, "formatToolStripMenuItem");
             this.formatToolStripMenuItem.Click += new System.EventHandler(this.formatToolStripMenuItem_Click);
             // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            resources.ApplyResources(this.toolStripSeparator3, "toolStripSeparator3");
+            // 
             // fillDownToolStripMenuItem
             // 
             this.fillDownToolStripMenuItem.Name = "fillDownToolStripMenuItem";
@@ -164,6 +170,7 @@
             dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.boundDataGridView.DefaultCellStyle = dataGridViewCellStyle2;
             resources.ApplyResources(this.boundDataGridView, "boundDataGridView");
+            this.boundDataGridView.MaximumColumnCount = 2000;
             this.boundDataGridView.Name = "boundDataGridView";
             dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
@@ -174,12 +181,8 @@
             dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
             this.boundDataGridView.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.boundDataGridView.CellContextMenuStripNeeded += new System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventHandler(this.boundDataGridView_CellContextMenuStripNeeded);
+            this.boundDataGridView.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.boundDataGridView_CellFormatting);
             this.boundDataGridView.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.boundDataGridView_ColumnHeaderMouseClick);
-            // 
-            // toolStripSeparator3
-            // 
-            this.toolStripSeparator3.Name = "toolStripSeparator3";
-            resources.ApplyResources(this.toolStripSeparator3, "toolStripSeparator3");
             // 
             // DataboundGridControl
             // 

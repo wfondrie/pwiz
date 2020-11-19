@@ -632,5 +632,88 @@ namespace pwiz.Skyline.Controls.Databinding
                 }
             }
         }
+
+        private void boundDataGridView_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            var bindingSource = BindingListSource;
+            if (e.RowIndex < 0 || e.RowIndex >= bindingSource.Count)
+            {
+                return;
+            }
+            var column = DataGridView.Columns[e.ColumnIndex];
+            var propertyDescriptor =
+                bindingSource.FindDataProperty(column.DataPropertyName) as ColumnPropertyDescriptor;
+            if (propertyDescriptor == null || PivotKey.EMPTY.Equals(propertyDescriptor.PivotKey))
+            {
+                return;
+            }
+
+            var cellValue = ToDoubleValue(DataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Value);
+            if (cellValue == null)
+            {
+                return;
+            }
+            
+            var propertyPath = propertyDescriptor.PropertyPath;
+            var values = new List<double>();
+            var rowItem = (RowItem) bindingSource[e.RowIndex];
+            foreach (var itemProperty in BindingListSource.ItemProperties.OfType<ColumnPropertyDescriptor>())
+            {
+                if (!Equals(propertyPath, propertyDescriptor.PropertyPath))
+                {
+                    continue;
+                }
+
+                var value = ToDoubleValue(itemProperty.GetValue(rowItem));
+                if (value.HasValue && !double.IsInfinity(value.Value) && !double.IsNaN(value.Value))
+                {
+                    values.Add(value.Value);
+                }
+            }
+
+            if (values.Count == 0)
+            {
+                return;
+            }
+            var stats = new Statistics(values);
+            var mean = stats.Mean();
+            var stdDev = stats.StdDev();
+            var zScore = (cellValue - mean) / stdDev;
+            Color backColor;
+            if (zScore <= -4)
+            {
+                backColor = Color.FromArgb(255, 255, 0);
+            }
+            else if (zScore >= 4)
+            {
+                backColor = Color.FromArgb(255, 0, 255);
+            }
+            else
+            {
+                var blue = (int) ((zScore + 4) * 255 / 8);
+                backColor = Color.FromArgb(255, 255 - blue, blue);
+            }
+
+            e.CellStyle.BackColor = backColor;
+        }
+
+        private double? ToDoubleValue(object value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+            if (value is float floatValue)
+            {
+                return floatValue;
+            }
+
+            if (value is double doubleValue)
+            {
+                return doubleValue;
+            }
+
+            return null;
+        }
     }
 }
