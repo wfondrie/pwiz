@@ -7,34 +7,35 @@ using pwiz.Common.SystemUtil;
 
 namespace pwiz.Common.DataBinding.Clustering
 {
-    public class ColumnCluster : Immutable
+    public class PivotedPropertySet : AbstractReadOnlyList<DataPropertyDescriptor>
     {
-        public ColumnCluster(IEnumerable<PivotKey> pivotKeys, IEnumerable<ColumnGroup> columnGroups)
+        public PivotedPropertySet(IEnumerable<PivotKey> pivotKeys, IEnumerable<Group> columnGroups)
         {
             PivotKeys = ImmutableList.ValueOf(pivotKeys);
-            MergeIndices = ClusterMergeIndices.EMPTY;
-            ColumnGroups = ImmutableList.ValueOf(columnGroups);
+            Groups = ImmutableList.ValueOf(columnGroups);
         }
 
         public ImmutableList<PivotKey> PivotKeys { get; private set; }
+
+        public override int Count
+        {
+            get { return PivotKeys.Count * Groups.Count; }
+        }
+
+        public override DataPropertyDescriptor this[int index]
+        {
+            get
+            {
+                return Groups[index % Groups.Count].Columns[index / Groups.Count];
+            }
+        }
 
         public int IndexOfPivotKey(PivotKey pivotKey)
         {
             return PivotKeys.IndexOf(pivotKey);
         }
-        public ClusterMergeIndices MergeIndices { get; private set; }
 
-        public ColumnCluster ChangeMergeIndices(ClusterMergeIndices mergeIndices)
-        {
-            return ChangeProp(ImClone(this), im => im.MergeIndices = mergeIndices);
-        }
-
-        public bool IsFlat
-        {
-            get { return MergeIndices.Indices.Count == 0; }
-        }
-
-        public ImmutableList<ColumnGroup> ColumnGroups
+        public ImmutableList<Group> Groups
         {
             get; private set;
         }
@@ -44,7 +45,7 @@ namespace pwiz.Common.DataBinding.Clustering
             get
             {
                 return Enumerable.Range(0, PivotKeys.Count)
-                    .SelectMany(i => ColumnGroups.SelectMany(group => group.Columns));
+                    .SelectMany(i => Groups.Select(group => group.Columns[i]));
             }
         }
 
@@ -53,7 +54,7 @@ namespace pwiz.Common.DataBinding.Clustering
             get
             {
                 return Enumerable.Range(0, PivotKeys.Count)
-                    .SelectMany(i => ColumnGroups.Where(group => group.IsNumeric).SelectMany(group => group.Columns));
+                    .SelectMany(i => Groups.Where(group => group.IsNumeric).Select(group => group.Columns[i]));
             }
         }
 
@@ -61,7 +62,15 @@ namespace pwiz.Common.DataBinding.Clustering
         {
             get
             {
-                return ColumnGroups.Where(group => group.IsNumeric).Sum(group => group.Columns.Count);
+                return NumericGroupCount * PivotKeys.Count;
+            }
+        }
+
+        public int NumericGroupCount
+        {
+            get
+            {
+                return Groups.Count(group => group.IsNumeric);
             }
         }
 
@@ -70,9 +79,9 @@ namespace pwiz.Common.DataBinding.Clustering
             return type == typeof(double) || type == typeof(double?) || type == typeof(float) || type == typeof(float?);
         }
 
-        public class ColumnGroup : Immutable
+        public class Group : Immutable
         {
-            public ColumnGroup(PropertyPath propertyPath, IEnumerable<DataPropertyDescriptor> propertyDescriptors)
+            public Group(PropertyPath propertyPath, IEnumerable<DataPropertyDescriptor> propertyDescriptors)
             {
                 PropertyPath = propertyPath;
                 Columns = ImmutableList.ValueOf(propertyDescriptors);
@@ -87,26 +96,17 @@ namespace pwiz.Common.DataBinding.Clustering
 
             public bool IsNumeric { get; private set; }
 
-            public ColumnGroup ChangeNumeric(bool numeric)
+            public Group ChangeNumeric(bool numeric)
             {
                 return ChangeProp(ImClone(this), im => im.IsNumeric = numeric);
             }
 
             public ImmutableList<DataPropertyDescriptor> Columns { get; private set; }
-        }
 
-        public List<double> GetZScores(RowItem rowItem)
-        {
-            var zScores = new List<double>(NumericColumnCount);
-            foreach (var columnGroup in ColumnGroups)
+            public IList<double?> GetZScores(RowItem rowItem)
             {
-                if (!columnGroup.IsNumeric)
-                {
-                    continue;
-                }
-
-                var values = new List<double?>(columnGroup.Columns.Count);
-                foreach (var column in columnGroup.Columns)
+                var values = new List<double?>(Columns.Count);
+                foreach (var column in Columns)
                 {
                     var value = column.GetValue(rowItem);
                     if (value != null)
@@ -120,31 +120,49 @@ namespace pwiz.Common.DataBinding.Clustering
                     }
                     values.Add(null);
                 }
-
                 var validValues = values.OfType<double>().ToList();
                 if (validValues.Count > 1)
                 {
                     var mean = validValues.Mean();
                     var stdDev = validValues.StandardDeviation();
-                    foreach (var value in values)
+                    for (int i = 0; i < values.Count; i++)
                     {
+                        var value = values[i];
                         if (value.HasValue)
                         {
-                            zScores.Add((value.Value - mean) / stdDev);
-                        }
-                        else
-                        {
-                            zScores.Add(0);
+                            values[i] = (value.Value - mean) / stdDev;
                         }
                     }
                 }
                 else
                 {
-                    zScores.AddRange(Enumerable.Repeat(0.0, values.Count));
+                    for (int i = 0; i < values.Count; i++)
+                    {
+                        if (values[i].HasValue)
+                        {
+                            values[i] = 0;
+                        }
+                    }
                 }
+                return values;
+            }
+        }
+
+        public double? GetZScore(RowItem rowItem, int columnIndex)
+        {
+            var group = Groups[columnIndex % Groups.Count];
+            if (!group.IsNumeric)
+            {
+                return null;
             }
 
-            return zScores;
+            return group.GetZScores(rowItem)[columnIndex / Groups.Count];
+        }
+
+        public List<double> GetNumericZScores(RowItem rowItem)
+        {
+            return Groups.Where(group => group.IsNumeric).SelectMany(group => group.GetZScores(rowItem))
+                .Select(val => val.GetValueOrDefault()).ToList();
         }
     }
 }

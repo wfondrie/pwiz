@@ -217,7 +217,7 @@ namespace pwiz.Common.DataBinding.Controls
             }
             else
             {
-                _allProperties = BindingListSource.ItemProperties;
+                _allProperties = ImmutableList.ValueOf(BindingListSource.ItemProperties);
             }
             UpdateUi();
         }

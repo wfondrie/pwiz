@@ -24,6 +24,7 @@ using System.Windows.Forms;
 using pwiz.Common.Collections;
 using pwiz.Common.Controls;
 using pwiz.Common.DataBinding.Attributes;
+using pwiz.Common.DataBinding.Clustering;
 using pwiz.Common.DataBinding.Internal;
 using pwiz.Common.DataBinding.Layout;
 
@@ -40,7 +41,7 @@ namespace pwiz.Common.DataBinding.Controls
     {
         private BindingListSource _bindingListSource;
         private IViewContext _viewContext;
-        private ImmutableList<DataPropertyDescriptor> _itemProperties;
+        private ItemProperties _itemProperties;
         private ImmutableList<ColumnFormat> _columnFormats;
 
         public BoundDataGridView()

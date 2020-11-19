@@ -1,6 +1,6 @@
 ﻿namespace pwiz.Common.Controls.Clustering
 {
-    partial class Dendrogram
+    partial class DendrogramControl
     {
         /// <summary> 
         /// Required designer variable.
@@ -28,8 +28,16 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
+            this.components = new System.ComponentModel.Container();
+            this.SuspendLayout();
+            // 
+            // Dendrogram
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Name = "Dendrogram";
+            this.ResumeLayout(false);
+
         }
 
         #endregion

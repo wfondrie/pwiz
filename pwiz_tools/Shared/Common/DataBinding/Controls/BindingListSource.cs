@@ -23,7 +23,7 @@ using System.Linq;
 using System.ComponentModel;
 using System.Threading;
 using System.Windows.Forms;
-using pwiz.Common.Collections;
+using pwiz.Common.DataBinding.Clustering;
 using pwiz.Common.DataBinding.Internal;
 using pwiz.Common.DataBinding.Layout;
 
@@ -206,7 +206,12 @@ namespace pwiz.Common.DataBinding.Controls
             get; private set;
         }
 
-        public ImmutableList<DataPropertyDescriptor> ItemProperties { get { return BindingListView.ItemProperties; } }
+        public ItemProperties ItemProperties { get { return BindingListView.ItemProperties; } }
+
+        public ViewResults ViewResults
+        {
+            get { return BindingListView.ViewResults; }
+        }
 
         public DataPropertyDescriptor FindDataProperty(string dataPropertyName)
         {

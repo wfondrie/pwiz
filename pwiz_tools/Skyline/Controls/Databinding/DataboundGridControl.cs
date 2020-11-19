@@ -29,6 +29,7 @@ using pwiz.Common.DataBinding.Controls;
 using pwiz.Common.DataBinding.Layout;
 using pwiz.Skyline.Alerts;
 using pwiz.Common.SystemUtil;
+using pwiz.Skyline.Model;
 using pwiz.Skyline.Model.Databinding;
 using pwiz.Skyline.Properties;
 using pwiz.Skyline.Util;
@@ -641,44 +642,12 @@ namespace pwiz.Skyline.Controls.Databinding
                 return;
             }
             var column = DataGridView.Columns[e.ColumnIndex];
-            var propertyDescriptor =
-                bindingSource.FindDataProperty(column.DataPropertyName) as ColumnPropertyDescriptor;
-            if (propertyDescriptor == null || PivotKey.EMPTY.Equals(propertyDescriptor.PivotKey))
+            int propertyIndex = bindingSource.ItemProperties.IndexOfName(column.DataPropertyName);
+            double? zScore = bindingSource.ViewResults.ResultColumns.GetZScore(bindingSource.ItemProperties[propertyIndex], bindingSource[e.RowIndex] as RowItem);
+            if (!zScore.HasValue)
             {
                 return;
             }
-
-            var cellValue = ToDoubleValue(DataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Value);
-            if (cellValue == null)
-            {
-                return;
-            }
-            
-            var propertyPath = propertyDescriptor.PropertyPath;
-            var values = new List<double>();
-            var rowItem = (RowItem) bindingSource[e.RowIndex];
-            foreach (var itemProperty in BindingListSource.ItemProperties.OfType<ColumnPropertyDescriptor>())
-            {
-                if (!Equals(propertyPath, propertyDescriptor.PropertyPath))
-                {
-                    continue;
-                }
-
-                var value = ToDoubleValue(itemProperty.GetValue(rowItem));
-                if (value.HasValue && !double.IsInfinity(value.Value) && !double.IsNaN(value.Value))
-                {
-                    values.Add(value.Value);
-                }
-            }
-
-            if (values.Count == 0)
-            {
-                return;
-            }
-            var stats = new Statistics(values);
-            var mean = stats.Mean();
-            var stdDev = stats.StdDev();
-            var zScore = (cellValue - mean) / stdDev;
             Color backColor;
             if (zScore <= -4)
             {

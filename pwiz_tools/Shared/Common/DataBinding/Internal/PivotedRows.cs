@@ -42,7 +42,7 @@ namespace pwiz.Common.DataBinding.Internal
         }
         public ImmutableList<DataPropertyDescriptor> ItemProperties { get; private set; }
 
-        public ImmutableList<ColumnCluster> ColumnClusters { get; private set; }
+        public ImmutableList<PivotedPropertySet> ColumnClusters { get; private set; }
 
     }
 }

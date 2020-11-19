@@ -44,10 +44,10 @@ namespace pwiz.SkylineTest.HierarchicalClustering
             var viewContext = new DocumentGridViewContext(dataSchema);
             var bindingListSource = new BindingListSource(CancellationToken.None);
             bindingListSource.SetViewContext(viewContext, viewInfo);
-            var clusterer = new Clusterer(bindingListSource.ItemProperties);
+            var clusterer = new Clusterer(ResultColumns.FromProperties(bindingListSource.ItemProperties));
             var rowItems = bindingListSource.OfType<RowItem>().ToList();
             var clusteredRows = clusterer.ClusterRows(rowItems);
-            Assert.AreEqual(rowItems.Count - 1, clusteredRows.Item2.Indices.Count);
+            Assert.AreEqual(rowItems.Count - 1, clusteredRows.Item2.Pairs.Count);
         }
     }
 }

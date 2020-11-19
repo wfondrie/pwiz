@@ -18,8 +18,8 @@
  */
 
 using System.Collections.Generic;
-using System.ComponentModel;
 using pwiz.Common.Collections;
+using pwiz.Common.DataBinding.Clustering;
 using pwiz.Common.DataBinding.Layout;
 using pwiz.Common.SystemUtil;
 
@@ -85,6 +85,23 @@ namespace pwiz.Common.DataBinding.Internal
             {
                 return TransformResults.PivotedRows.RowItems;
             }
+        }
+        public ViewResults ViewResults { get; private set; }
+
+        public QueryResults ChangeViewResults(ViewResults viewResults)
+        {
+            return ChangeProp(ImClone(this), im => im.ViewResults = viewResults);
+        }
+
+        public ViewResults MakeViewResults()
+        {
+            if (ViewResults != null)
+            {
+                return ViewResults;
+            }
+
+            return new ViewResults(new ResultColumns(new ItemProperties(TransformResults.PivotedRows.ItemProperties)),
+                ImmutableList.ValueOf(TransformResults.PivotedRows.RowItems), ClusterMergeIndices.EMPTY);
         }
     }
 

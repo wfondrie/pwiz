@@ -95,17 +95,11 @@
     <Compile Include="Controls\Clustering\ClusteredBoundDataGridView.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Controls\Clustering\DataboundClusteringControl.cs">
+    <Compile Include="Controls\Clustering\DendrogramControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\Clustering\DataboundClusteringControl.Designer.cs">
-      <DependentUpon>DataboundClusteringControl.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\Clustering\Dendrogram.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Controls\Clustering\Dendrogram.Designer.cs">
-      <DependentUpon>Dendrogram.cs</DependentUpon>
+    <Compile Include="Controls\Clustering\DendrogramControl.Designer.cs">
+      <DependentUpon>DendrogramControl.cs</DependentUpon>
     </Compile>
     <Compile Include="Controls\CommonDataGridView.cs">
       <SubType>Component</SubType>
@@ -163,10 +157,15 @@
     <Compile Include="DataBinding\Attributes\UiModeAttribute.cs" />
     <Compile Include="DataBinding\Attributes\HiddenAttribute.cs" />
     <Compile Include="DataBinding\ChainedPropertyDescriptor.cs" />
+    <Compile Include="DataBinding\Clustering\ClusteredColumns.cs" />
     <Compile Include="DataBinding\Clustering\Clusterer.cs" />
     <Compile Include="DataBinding\Clustering\ClusterMergeIndices.cs" />
     <Compile Include="DataBinding\Clustering\ClusteredRows.cs" />
-    <Compile Include="DataBinding\Clustering\ColumnCluster.cs" />
+    <Compile Include="DataBinding\Clustering\IPropertyList.cs" />
+    <Compile Include="DataBinding\Clustering\ItemProperties.cs" />
+    <Compile Include="DataBinding\Clustering\PivotedPropertySet.cs" />
+    <Compile Include="DataBinding\Clustering\ResultColumns.cs" />
+    <Compile Include="DataBinding\Clustering\ViewResults.cs" />
     <Compile Include="DataBinding\CollectionInfo.cs" />
     <Compile Include="DataBinding\ColumnFormats.cs" />
     <Compile Include="DataBinding\ColumnSelector.cs" />
@@ -328,6 +327,7 @@
     <Compile Include="DataBinding\Layout\ViewLayout.cs" />
     <Compile Include="DataBinding\ViewGroup.cs" />
     <Compile Include="DataBinding\ViewInfo.cs" />
+    <Compile Include="DataBinding\ClusteredResults.cs" />
     <Compile Include="DataBinding\ViewSpecLayout.cs" />
     <Compile Include="DataBinding\ViewSpecList.cs" />
     <Compile Include="Graph\CurveDataHandler.cs" />
@@ -353,8 +353,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Controls\Clustering\DataboundClusteringControl.resx">
-      <DependentUpon>DataboundClusteringControl.cs</DependentUpon>
+    <EmbeddedResource Include="Controls\Clustering\DendrogramControl.resx">
+      <DependentUpon>DendrogramControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\FindBox.ja.resx">
       <DependentUpon>FindBox.cs</DependentUpon>

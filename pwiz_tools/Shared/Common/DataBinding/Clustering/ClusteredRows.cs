@@ -15,7 +15,7 @@ namespace pwiz.Common.DataBinding.Clustering
         }
         public ImmutableList<RowItem> RowItems { get; private set; }
         public ClusterMergeIndices RowMergeIndices { get; private set; }
-        public ImmutableList<ColumnCluster> ColumnClusters { get; private set; }
+        public ImmutableList<PivotedPropertySet> ColumnClusters { get; private set; }
 
         public IEnumerable<DataPropertyDescriptor> ItemProperties
         {

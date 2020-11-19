@@ -24,7 +24,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
-using pwiz.Common.Collections;
+using pwiz.Common.DataBinding.Clustering;
 using pwiz.Common.DataBinding.Controls;
 using pwiz.Common.DataBinding.Layout;
 
@@ -47,8 +47,7 @@ namespace pwiz.Common.DataBinding.Internal
     internal class BindingListView : BindingList<RowItem>, ITypedList, IBindingListView, IRaiseItemChangedEvents, IDisposable
     {
         private readonly HashSet<ListChangedEventHandler> _listChangedEventHandlers = new HashSet<ListChangedEventHandler>();
-        private ImmutableList<DataPropertyDescriptor> _itemProperties;
-        private IDictionary<string, DataPropertyDescriptor> _itemPropertiesDictionary;
+        private ViewResults _viewResults;
         private QueryResults _queryResults;
         private IRowSource _rowSource = StaticRowSource.EMPTY;
         private readonly QueryRequestor _queryRequestor;
@@ -60,8 +59,7 @@ namespace pwiz.Common.DataBinding.Internal
             EventTaskScheduler = eventTaskScheduler;
             QueryLock = new QueryLock(CancellationToken.None);
             _queryResults = QueryResults.Empty;
-            _itemProperties = ImmutableList<DataPropertyDescriptor>.EMPTY;
-            _itemPropertiesDictionary = new Dictionary<string, DataPropertyDescriptor>();
+            _viewResults = ViewResults.EMPTY;
             _queryRequestor = new QueryRequestor(this);
             AllowNew = AllowRemove = AllowEdit = false;
         }
@@ -301,7 +299,7 @@ namespace pwiz.Common.DataBinding.Internal
         {
             if (listAccessors == null || listAccessors.Length == 0)
             {
-                return new PropertyDescriptorCollection(_itemProperties.ToArray());
+                return new PropertyDescriptorCollection(ItemProperties.ToArray());
             }
             var propertyDescriptor = listAccessors[listAccessors.Length - 1];
             var collectionInfo = ViewInfo.DataSchema.GetCollectionInfo(propertyDescriptor.PropertyType);
@@ -312,13 +310,16 @@ namespace pwiz.Common.DataBinding.Internal
             return new PropertyDescriptorCollection(ViewInfo.DataSchema.GetPropertyDescriptors(propertyDescriptor.PropertyType).ToArray());
         }
 
-        public ImmutableList<DataPropertyDescriptor> ItemProperties { get { return _itemProperties; } }
+        public ItemProperties ItemProperties { get { return _viewResults.ResultColumns.ItemProperties; } }
 
         public DataPropertyDescriptor FindDataProperty(string name)
         {
-            DataPropertyDescriptor propertyDescriptor;
-            _itemPropertiesDictionary.TryGetValue(name, out propertyDescriptor);
-            return propertyDescriptor;
+            int index = ItemProperties.IndexOfName(name);
+            if (index < 0)
+            {
+                return null;
+            }
+            return ItemProperties[index];
         }
 
         private List<RowItem> RowItemList
@@ -345,6 +346,7 @@ namespace pwiz.Common.DataBinding.Internal
                 return;
             }
             _queryResults = queryResults;
+            var viewResults = QueryResults.MakeViewResults();
             bool rowCountChanged = Count != QueryResults.ResultRows.Count;
             var newRow = _newRow;
             if (newRow != null)
@@ -353,23 +355,15 @@ namespace pwiz.Common.DataBinding.Internal
                 CancelNew(newRowPos);
             }
             RowItemList.Clear();
-            RowItemList.AddRange(QueryResults.ResultRows);
+            RowItemList.AddRange(viewResults.RowItems);
             if (newRow != null && !NewRowHandler.IsNewRowEmpty(newRow))
             {
                 _newRow = newRow;
                 AddNew();
             }
-            bool propsChanged = false;
-            if (_itemProperties == null)
-            {
-                propsChanged = true;
-            }
-            else if (!_itemProperties.SequenceEqual(QueryResults.ItemProperties))
-            {
-                propsChanged = true;
-            }
-            _itemProperties = QueryResults.ItemProperties;
-            _itemPropertiesDictionary = _itemProperties.ToDictionary(property => property.Name);
+            bool propsChanged = !ItemProperties.SequenceEqual(viewResults.ItemProperties);
+
+            _viewResults = viewResults;
             AllowNew = NewRowHandler != null;
             AllowEdit = true;
             AllowRemove = false;
@@ -442,6 +436,11 @@ namespace pwiz.Common.DataBinding.Internal
         public QueryResults QueryResults
         {
             get { return _queryResults; }
+        }
+
+        public ViewResults ViewResults
+        {
+            get { return _viewResults; }
         }
 
         public bool IsRequerying

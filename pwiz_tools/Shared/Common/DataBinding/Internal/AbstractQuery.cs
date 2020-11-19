@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
+using pwiz.Common.Collections;
 using pwiz.Common.DataBinding.Clustering;
 using pwiz.Common.DataBinding.Layout;
 
@@ -34,14 +35,19 @@ namespace pwiz.Common.DataBinding.Internal
             var pivotedRows = Pivot(cancellationToken, results);
             var dataSchema = results.Parameters.ViewInfo.DataSchema;
             var transformedRows = Transform(cancellationToken, dataSchema, new TransformResults(null, null, pivotedRows), results.Parameters.TransformStack);
-            var clusterer = new Clusterer(transformedRows.PivotedRows.ItemProperties);
+            var clusterer = new Clusterer(ResultColumns.FromProperties(transformedRows.PivotedRows.ItemProperties));
+            results = results.ChangeTransformResults(transformedRows);
+            ViewResults viewResults = new ViewResults(clusterer.ResultColumns, ImmutableList.ValueOf(pivotedRows.RowItems), ClusterMergeIndices.EMPTY);
             var rowClusterResult = clusterer.ClusterRows(transformedRows.PivotedRows.RowItems);
+            var clusterColumns = clusterer.ClusterColumns(transformedRows.PivotedRows.RowItems);
             if (rowClusterResult != null)
             {
-                pivotedRows = new PivotedRows(rowClusterResult.Item1, transformedRows.PivotedRows.ItemProperties);
-                transformedRows = new TransformResults(transformedRows.Parent, transformedRows.RowTransform, pivotedRows);
+                viewResults = new ViewResults(clusterColumns, rowClusterResult.Item1, rowClusterResult.Item2);
             }
-            return results.ChangeTransformResults(transformedRows);
+
+            results = results.ChangeViewResults(viewResults);
+
+            return results;
         }
 
         protected PivotedRows Pivot(CancellationToken cancellationToken, QueryResults results)

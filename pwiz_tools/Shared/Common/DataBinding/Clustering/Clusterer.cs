@@ -7,46 +7,18 @@ namespace pwiz.Common.DataBinding.Clustering
 {
     public class Clusterer
     {
-        public Clusterer(IEnumerable<DataPropertyDescriptor> columns)
+        public Clusterer(ResultColumns resultColumns)
         {
-            var allColumns = columns.ToList();
-            var columnsByPropertyDescriptor = allColumns.OfType<ColumnPropertyDescriptor>()
-                .ToLookup(col => col.DisplayColumn?.ColumnDescriptor?.PropertyPath);
-            var columnGroups = columnsByPropertyDescriptor.Where(group => 1 < group.Count())
-                .ToLookup(group => ImmutableList.ValueOf(group.Select(col => col.PivotKey)));
-            List<ColumnCluster> columnClusters = new List<ColumnCluster>();
-            foreach (var columnGroupGroup in columnGroups)
-            {
-                var columnCluster = new ColumnCluster(columnGroupGroup.Key, columnGroupGroup.Select(group => new ColumnCluster.ColumnGroup(group.Key, group)));
-                if (columnCluster.ColumnGroups.Any(group => group.IsNumeric))
-                {
-                    columnClusters.Add(columnCluster);
-                }
-            }
-
-            var clusterablePropertyPaths = columnClusters
-                .SelectMany(cluster => cluster.ColumnGroups.Select(group => group.PropertyPath)).ToHashSet();
-
-            var flatColumns = new List<DataPropertyDescriptor>();
-            foreach (var column in allColumns)
-            {
-                var propertyPath = (column as ColumnPropertyDescriptor)?.DisplayColumn?.ColumnDescriptor?.PropertyPath;
-                if (propertyPath == null || !clusterablePropertyPaths.Contains(propertyPath))
-                {
-                    flatColumns.Add(column);
-                }
-            }
-
-            FlatColumns = ImmutableList.ValueOf(flatColumns);
-            ClusterableColumns = ImmutableList.ValueOf(columnClusters);
+            ResultColumns = resultColumns;
         }
 
-        public ImmutableList<DataPropertyDescriptor> FlatColumns { get; private set; }
-        public ImmutableList<ColumnCluster> ClusterableColumns { get; private set; }
+        public ResultColumns ResultColumns { get; private set; }
 
         public Tuple<ImmutableList<RowItem>, ClusterMergeIndices> ClusterRows(IList<RowItem> rowItems)
         {
-            var numericColumns = ClusterableColumns.SelectMany(cluster => cluster.NumericPropertyDescriptors).ToList();
+            var pivotedPropertySets = ResultColumns.PivotedPropertySets.ToList();
+            var numericColumns = pivotedPropertySets
+                .SelectMany(set => set.NumericPropertyDescriptors).ToList();
             if (numericColumns.Count == 0)
             {
                 return null;
@@ -57,7 +29,7 @@ namespace pwiz.Common.DataBinding.Clustering
             {
                 var rowItem = rowItems[iRow];
                 int iCol = 0;
-                foreach (var value in ClusterableColumns.SelectMany(cluster => cluster.GetZScores(rowItem)))
+                foreach (var value in pivotedPropertySets.SelectMany(set => set.GetNumericZScores(rowItem)))
                 {
                     points[iRow, iCol++] = value;
                 }
@@ -69,20 +41,66 @@ namespace pwiz.Common.DataBinding.Clustering
             return Tuple.Create(newRows, MakeClusterMergeIndices(rep));
         }
 
+        public ResultColumns ClusterColumns(IList<RowItem> rowItems)
+        {
+            return new ResultColumns(ResultColumns.ColumnSets.Select(columns=>ClusterPropertySet(columns, rowItems)));
+        }
+
+        public ClusteredColumns ClusterPropertySet(ClusteredColumns clusteredColumns, IList<RowItem> rowItems)
+        {
+            var pivotedPropertySet = clusteredColumns.Columns as PivotedPropertySet;
+            if (pivotedPropertySet == null)
+            {
+                return clusteredColumns;
+            }
+
+            var points = new double[pivotedPropertySet.PivotKeys.Count, 
+                rowItems.Count * pivotedPropertySet.NumericGroupCount];
+            int iFeature = 0;
+            foreach (var rowItem in rowItems)
+            {
+                foreach (var group in pivotedPropertySet.Groups)
+                {
+                    if (!group.IsNumeric)
+                    {
+                        continue;
+                    }
+
+                    var zScores = group.GetZScores(rowItem);
+                    for (int iPivotKey = 0; iPivotKey < zScores.Count; iPivotKey++)
+                    {
+                        var zScore = zScores[iPivotKey];
+                        if (zScore.HasValue)
+                        {
+                            points[iPivotKey, iFeature] = zScore.Value;
+                        }
+                    }
+                }
+            }
+            alglib.clusterizercreate(out alglib.clusterizerstate s);
+            alglib.clusterizersetpoints(s, points, 2);
+            alglib.clusterizerrunahc(s, out alglib.ahcreport rep);
+            var newPivotedPropertySet = new PivotedPropertySet(Reorder(pivotedPropertySet.PivotKeys, rep),
+                pivotedPropertySet.Groups.Select(group =>
+                    new PivotedPropertySet.Group(group.PropertyPath, Reorder(group.Columns, rep)))
+            );
+            return new ClusteredColumns(newPivotedPropertySet, MakeClusterMergeIndices(rep));
+        }
+
         public static ClusterMergeIndices MakeClusterMergeIndices(alglib.ahcreport clusterReport)
         {
             return new ClusterMergeIndices(Enumerable.Range(0, clusterReport.pz.GetLength(0)).Select(i=>new KeyValuePair<int, int>(clusterReport.pz[i, 0], clusterReport.pz[i, 1])));
         }
 
-        public static IEnumerable<T> Reorder<T>(IList<T> items, alglib.ahcreport clusterReport)
+        public static IEnumerable<T> Reorder<T>(IList<T> itemList, alglib.ahcreport clusterReport)
         {
-            if (items.Count != clusterReport.p.Length)
+            if (itemList.Count != clusterReport.p.Length)
             {
                 throw new ArgumentException();
             }
 
             return Enumerable.Range(0, clusterReport.p.Length).OrderBy(i => clusterReport.p[i])
-                .Select(i => items[i]);
+                .Select(i => itemList[i]);
         }
     }
 }

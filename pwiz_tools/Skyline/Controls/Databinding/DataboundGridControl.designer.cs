@@ -33,8 +33,6 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            this.navBar = new pwiz.Common.DataBinding.Controls.NavBar();
-            this.bindingListSource = new pwiz.Common.DataBinding.Controls.BindingListSource(this.components);
             this.contextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.sortAscendingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sortDescendingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -47,23 +45,14 @@
             this.formatToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.fillDownToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.dendrogram1 = new pwiz.Common.Controls.Clustering.Dendrogram();
             this.boundDataGridView = new pwiz.Skyline.Controls.Databinding.BoundDataGridViewEx();
-            ((System.ComponentModel.ISupportInitialize)(this.bindingListSource)).BeginInit();
+            this.bindingListSource = new pwiz.Common.DataBinding.Controls.BindingListSource(this.components);
+            this.navBar = new pwiz.Common.DataBinding.Controls.NavBar();
             this.contextMenuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.boundDataGridView)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.bindingListSource)).BeginInit();
             this.SuspendLayout();
-            // 
-            // navBar
-            // 
-            resources.ApplyResources(this.navBar, "navBar");
-            this.navBar.BindingListSource = this.bindingListSource;
-            this.navBar.Name = "navBar";
-            this.navBar.ShowViewsButton = true;
-            // 
-            // bindingListSource
-            // 
-            this.bindingListSource.NewRowHandler = null;
-            this.bindingListSource.DataError += new System.Windows.Forms.BindingManagerDataErrorEventHandler(this.bindingListSource_DataError);
             // 
             // contextMenuStrip
             // 
@@ -146,6 +135,12 @@
             resources.ApplyResources(this.fillDownToolStripMenuItem, "fillDownToolStripMenuItem");
             this.fillDownToolStripMenuItem.Click += new System.EventHandler(this.fillDownToolStripMenuItem_Click);
             // 
+            // dendrogram1
+            // 
+            this.dendrogram1.BoundDataGridView = this.boundDataGridView;
+            resources.ApplyResources(this.dendrogram1, "dendrogram1");
+            this.dendrogram1.Name = "dendrogram1";
+            // 
             // boundDataGridView
             // 
             this.boundDataGridView.AutoGenerateColumns = false;
@@ -184,16 +179,29 @@
             this.boundDataGridView.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.boundDataGridView_CellFormatting);
             this.boundDataGridView.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.boundDataGridView_ColumnHeaderMouseClick);
             // 
+            // bindingListSource
+            // 
+            this.bindingListSource.NewRowHandler = null;
+            this.bindingListSource.DataError += new System.Windows.Forms.BindingManagerDataErrorEventHandler(this.bindingListSource_DataError);
+            // 
+            // navBar
+            // 
+            resources.ApplyResources(this.navBar, "navBar");
+            this.navBar.BindingListSource = this.bindingListSource;
+            this.navBar.Name = "navBar";
+            this.navBar.ShowViewsButton = true;
+            // 
             // DataboundGridControl
             // 
             resources.ApplyResources(this, "$this");
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.boundDataGridView);
+            this.Controls.Add(this.dendrogram1);
             this.Controls.Add(this.navBar);
             this.Name = "DataboundGridControl";
-            ((System.ComponentModel.ISupportInitialize)(this.bindingListSource)).EndInit();
             this.contextMenuStrip.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.boundDataGridView)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.bindingListSource)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -216,5 +224,6 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripMenuItem formatToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+        private Common.Controls.Clustering.Dendrogram dendrogram1;
     }
 }
