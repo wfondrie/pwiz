@@ -83,7 +83,6 @@ void test(const string& filepath, const DiaUmpire::Config& config)
     writeConfig.binaryDataEncoderConfig.precision = BinaryDataEncoder::Precision_32;
 
     ostringstream outputStream;
-    MSData outputMsd;
     msd.run.spectrumListPtr = dusl;
     msd.id = msd.run.id = referenceFilepath.filename().replace_extension("").string();
     MSDataFile::write(msd, outputStream, writeConfig);
@@ -92,8 +91,13 @@ void test(const string& filepath, const DiaUmpire::Config& config)
     {
         MSDataFile referenceMsd(referenceFilepath.string());
 
+        // erase the mzML sourceFile element created by reading the reference file
         vector<SourceFilePtr>& sfs = referenceMsd.fileDescription.sourceFilePtrs;
-        if (!sfs.empty()) sfs.erase(sfs.end() - 1);
+        sfs.erase(sfs.end() - 1);
+
+        // blank out the mzXML locations for both the reference and actual
+        sfs.back()->location.clear();
+        msd.fileDescription.sourceFilePtrs.back()->location.clear();
 
         referenceMsd.run.defaultInstrumentConfigurationPtr.reset();
 
