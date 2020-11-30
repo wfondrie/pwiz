@@ -327,7 +327,7 @@ namespace TestPerf
 
             RunFunctionalTest();
 
-            //Assert.IsFalse(IsRecordMode);   // Make sure this doesn't get committed as true
+            Assert.IsFalse(IsRecordMode);   // Make sure this doesn't get committed as true
         }
 
         private string DataPath { get { return TestFilesDirs.Last().PersistentFilesDir; } }
@@ -344,7 +344,7 @@ namespace TestPerf
         /// <summary>
         /// Change to true to write coefficient arrays.
         /// </summary>
-        private bool IsRecordMode { get { return true; } }
+        private bool IsRecordMode { get { return IsRecordAuditLogForTutorials; } }
 
         private string ParseIrtProperties(string irtFormula)
         {
