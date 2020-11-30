@@ -99,6 +99,10 @@ void test(const string& filepath, const DiaUmpire::Config& config)
         sfs.back()->location.clear();
         msd.fileDescription.sourceFilePtrs.back()->location.clear();
 
+        // equalize versions
+        for (size_t i=0; i < referenceMsd.softwarePtrs.size() && i < msd.softwarePtrs.size(); ++i)
+        referenceMsd.softwarePtrs[i]->version = msd.softwarePtrs[i]->version;
+
         referenceMsd.run.defaultInstrumentConfigurationPtr.reset();
 
         DiffConfig diffConfig;
