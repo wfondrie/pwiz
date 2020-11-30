@@ -545,7 +545,6 @@ namespace TestPerf
                 importPeptideSearchDlg.ConverterSettingsControl.InstrumentPreset = _instrumentValues.InstrumentPreset;
                 importPeptideSearchDlg.ConverterSettingsControl.AdditionalSettings = _instrumentValues.AdditionalSettings;
             });
-            PauseTest();
             PauseForScreenShot("Import Peptide Search - DiaUmpire settings page", 14);
 
             bool? searchSucceeded = null;
@@ -559,7 +558,7 @@ namespace TestPerf
                 importPeptideSearchDlg.SearchSettingsControl.FragmentTolerance = _instrumentValues.FragmentTolerance;
                 importPeptideSearchDlg.SearchSettingsControl.FragmentIons = "b, y";
             });
-            //PauseTest();
+
             RunUI(() =>
             {
                 // Run the search
@@ -693,7 +692,7 @@ namespace TestPerf
             RunUI(SkylineWindow.AutoZoomBestPeak);
             WaitForGraphs();
             PauseForScreenShot("Snip just one chromatogram pane", 21);
-            //PauseTest();
+
             ClickChromatogram(SkylineWindow.Document.MeasuredResults.Chromatograms[0].Name,
                 _analysisValues.ChromatogramClickPoint.X,
                 _analysisValues.ChromatogramClickPoint.Y);
