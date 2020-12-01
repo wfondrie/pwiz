@@ -1043,7 +1043,7 @@ namespace DiaUmpire {
 
                     s->scanList.scans.emplace_back();
                     Scan& scan = s->scanList.scans.back();
-                    scan.set(MS_scan_start_time, precursorCluster.PeakHeightRT.at(0) * 60, UO_second);
+                    scan.set(MS_scan_start_time, round(precursorCluster.PeakHeightRT.at(0) * 10000.0) / 10000.0, UO_minute);
                     if (!msd_.instrumentConfigurationPtrs.empty())
                         scan.instrumentConfigurationPtr = msd_.instrumentConfigurationPtrs[0];
 

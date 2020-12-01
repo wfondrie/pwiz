@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using pwiz.CLI.analysis;
 using pwiz.CLI.msdata;
 using pwiz.CLI.util;
@@ -14,7 +12,6 @@ namespace pwiz.ProteowizardWrapper
 {
     public class DiaUmpire : MsDataFileImpl
     {
-        private IProgressMonitor _progressMonitor;
         private SpectrumList_DiaUmpire.Config _diaUmpireConfig;
         private IterationListenerToMonitor _ilrMonitor;
 
@@ -149,9 +146,8 @@ namespace pwiz.ProteowizardWrapper
             foreach (var window in targetWindows.Select(w => new SpectrumList_DiaUmpire.Config.TargetWindow(w.Start, w.End)))
                 _diaUmpireConfig.diaVariableWindows.Add(window);
 
-            _progressMonitor = progressMonitor;
             if (progressMonitor != null)
-                _ilrMonitor = new IterationListenerToMonitor(_progressMonitor);
+                _ilrMonitor = new IterationListenerToMonitor(progressMonitor);
         }
 
         class IterationListenerToMonitor : IterationListener
