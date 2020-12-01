@@ -114,7 +114,7 @@ namespace pwiz.Skyline.FileUI.PeptideSearch
             {
                 status = status.ChangeSegments(0, ImportPeptideSearch.SearchEngine.SpectrumFileNames.Length * 2);
 
-                t = Task<bool>.Factory.StartNew(() => ImportPeptideSearch.DdaConverter.Run(this, status), cancelToken.Token);
+                t = Task<bool>.Factory.StartNew((statusObj) => ImportPeptideSearch.DdaConverter.Run(this, statusObj as IProgressStatus), status, cancelToken.Token);
                 await t;
 
                 if (cancelToken.IsCancellationRequested)
