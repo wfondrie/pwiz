@@ -25,6 +25,7 @@
 #include "pwiz/data/msdata/Diff.hpp"
 #include "pwiz/data/msdata/SpectrumListBase.hpp"
 #include "pwiz/data/msdata/ChromatogramListBase.hpp"
+#include "pwiz/data/msdata/Version.hpp"
 
 using namespace pwiz::util;
 using namespace pwiz::msdata;
@@ -64,6 +65,39 @@ class UserFeedbackIterationListener : public IterationListener
     }
 };
 
+void manglePwizSoftware(MSData& msd)
+{
+    // a pwiz version change isn't worth regenerating the test data
+    vector<size_t> oldPwizSoftwarePtrs;
+    SoftwarePtr pwizSoftware;
+    for (size_t i = 0; i < msd.softwarePtrs.size(); ++i)
+        if (msd.softwarePtrs[i]->hasCVParam(MS_pwiz))
+        {
+            if (msd.softwarePtrs[i]->version != pwiz::msdata::Version::str())
+                oldPwizSoftwarePtrs.push_back(i);
+            else
+                pwizSoftware = msd.softwarePtrs[i];
+        }
+
+    pwizSoftware->id = "current pwiz";
+
+    msd.dataProcessingPtrs = msd.allDataProcessingPtrs();
+    msd.dataProcessingPtrs.resize(1);
+
+    SpectrumListBase* sl = dynamic_cast<SpectrumListBase*>(msd.run.spectrumListPtr.get());
+    ChromatogramListBase* cl = dynamic_cast<ChromatogramListBase*>(msd.run.chromatogramListPtr.get());
+    if (sl && !msd.dataProcessingPtrs.empty()) sl->setDataProcessingPtr(msd.dataProcessingPtrs[0]);
+    if (cl && !msd.dataProcessingPtrs.empty()) cl->setDataProcessingPtr(msd.dataProcessingPtrs[0]);
+
+    for (DataProcessingPtr& dp : msd.dataProcessingPtrs)
+        for (ProcessingMethod& pm : dp->processingMethods)
+            pm.softwarePtr = pwizSoftware;
+
+    for (vector<size_t>::reverse_iterator itr = oldPwizSoftwarePtrs.rbegin();
+        itr != oldPwizSoftwarePtrs.rend();
+        ++itr)
+        msd.softwarePtrs.erase(msd.softwarePtrs.begin() + (*itr));
+}
 
 void test(const string& filepath, const DiaUmpire::Config& config)
 {
@@ -100,8 +134,8 @@ void test(const string& filepath, const DiaUmpire::Config& config)
         msd.fileDescription.sourceFilePtrs.back()->location.clear();
 
         // equalize versions
-        for (size_t i=0; i < referenceMsd.softwarePtrs.size() && i < msd.softwarePtrs.size(); ++i)
-        referenceMsd.softwarePtrs[i]->version = msd.softwarePtrs[i]->version;
+        manglePwizSoftware(referenceMsd);
+        manglePwizSoftware(msd);
 
         referenceMsd.run.defaultInstrumentConfigurationPtr.reset();
 
