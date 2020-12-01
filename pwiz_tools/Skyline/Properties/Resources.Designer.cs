@@ -25413,6 +25413,16 @@ namespace pwiz.Skyline.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The value &apos;{0}&apos; is not valid for the argument {1} which must be either &apos;True&apos; or &apos;False&apos;..
+        /// </summary>
+        public static string Setting_Validate_The_value___0___is_not_valid_for_the_argument__1__which_must_be_either__True__or__False__ {
+            get {
+                return ResourceManager.GetString("Setting_Validate_The_value___0___is_not_valid_for_the_argument__1__which_must_be_" +
+                        "either__True__or__False__", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to None.
         /// </summary>
         public static string SettingsList_ELEMENT_NONE_None {

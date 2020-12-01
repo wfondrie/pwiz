@@ -29,7 +29,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using pwiz.Common.Chemistry;
 using pwiz.Common.DataBinding;
 using pwiz.Common.DataBinding.Controls;
-using pwiz.Common.DataBinding.Controls.Editor;
 using pwiz.ProteowizardWrapper;
 using pwiz.Skyline;
 using pwiz.Skyline.Alerts;
@@ -44,7 +43,6 @@ using pwiz.Skyline.Model;
 using pwiz.Skyline.Model.DocSettings;
 using pwiz.Skyline.Model.GroupComparison;
 using pwiz.Skyline.Model.Irt;
-using pwiz.Skyline.Model.Lib;
 using pwiz.Skyline.Model.Results;
 using pwiz.Skyline.Properties;
 using pwiz.Skyline.SettingsUI;
@@ -56,7 +54,7 @@ using pwiz.SkylineTestUtil;
 namespace TestPerf
 {
     /// <summary>
-    /// Verify DIA/SWATH tutorial operation
+    /// Verify DIA/SWATH tutorial operation via DIA-Umpire
     /// </summary>
     [TestClass]
     public class DiaUmpireTutorialTest : AbstractFunctionalTestEx

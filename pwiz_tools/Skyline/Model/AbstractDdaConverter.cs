@@ -16,9 +16,6 @@
  * limitations under the License.
  */
 
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using pwiz.Common.SystemUtil;
 using pwiz.Skyline.Model.Results;
 

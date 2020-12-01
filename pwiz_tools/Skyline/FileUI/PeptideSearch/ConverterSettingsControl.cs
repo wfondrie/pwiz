@@ -19,23 +19,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
-using pwiz.Common.Chemistry;
 using pwiz.Common.SystemUtil;
 using pwiz.Skyline.Alerts;
-using pwiz.Skyline.Controls;
 using pwiz.Skyline.Model;
-using pwiz.Skyline.Model.DocSettings;
-using pwiz.Skyline.Model.Results;
 using pwiz.Skyline.Properties;
 using pwiz.Skyline.SettingsUI;
 using pwiz.Skyline.Util;
-using pwiz.Skyline.Util.Extensions;
-using pwiz.CLI;
 using pwiz.ProteowizardWrapper;
 
 namespace pwiz.Skyline.FileUI.PeptideSearch
@@ -43,7 +33,6 @@ namespace pwiz.Skyline.FileUI.PeptideSearch
     public partial class ConverterSettingsControl : UserControl
     {
         private ImportPeptideSearch ImportPeptideSearch { get; set; }
-        private readonly IModifyDocumentContainer _documentContainer;
         private FullScanSettingsControl _fullScanSettingsControl;
         private IDictionary<string, AbstractDdaSearchEngine.Setting> _diaUmpireAdditionalSettings;
 
@@ -51,7 +40,6 @@ namespace pwiz.Skyline.FileUI.PeptideSearch
         {
             InitializeComponent();
             ImportPeptideSearch = importPeptideSearch;
-            _documentContainer = documentContainer;
             _fullScanSettingsControl = fullScanSettingsControl;
             converterTabControl.SelectedTab = null;
 

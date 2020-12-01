@@ -21,12 +21,10 @@ using System;
 using System.Linq;
 using System.Windows.Forms;
 using pwiz.Common.Chemistry;
-using pwiz.Common.DataBinding;
 using pwiz.Common.SystemUtil;
 using pwiz.Skyline.Alerts;
 using pwiz.Skyline.Controls;
 using pwiz.Skyline.Model;
-using pwiz.Skyline.Model.AuditLog;
 using pwiz.Skyline.Properties;
 using pwiz.Skyline.Util;
 
