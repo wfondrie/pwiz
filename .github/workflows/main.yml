@@ -2,6 +2,9 @@
 
 name: Build
 
+env:
+  DEVELOPER_DIR: /Applications/Xcode_11.3.app/Contents/Developer 
+
 # Controls when the action will run. 
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
@@ -27,4 +30,4 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run quickbuild
-        run: ./quickbuild.sh toolset=clang --abbreviate-paths -j2 pwiz
+        run: ./quickbuild.sh --abbreviate-paths -j2 pwiz
