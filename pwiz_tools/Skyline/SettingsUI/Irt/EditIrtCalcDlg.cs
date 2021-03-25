@@ -212,8 +212,8 @@ namespace pwiz.Skyline.SettingsUI.Irt
         {
             if (DatabaseChanged)
             {
-                var result = MessageBox.Show(this, Resources.EditIrtCalcDlg_btnCreateDb_Click_Are_you_sure_you_want_to_create_a_new_database_file_Any_changes_to_the_current_calculator_will_be_lost,
-                    Program.Name, MessageBoxButtons.YesNo);
+                var result = MultiButtonMsgDlg.Show(this, Resources.EditIrtCalcDlg_btnCreateDb_Click_Are_you_sure_you_want_to_create_a_new_database_file_Any_changes_to_the_current_calculator_will_be_lost,
+                    MessageBoxButtons.YesNo);
 
                 if (result != DialogResult.Yes)
                     return;
@@ -277,8 +277,8 @@ namespace pwiz.Skyline.SettingsUI.Irt
         {
             if (DatabaseChanged)
             {
-                var result = MessageBox.Show(this, Resources.EditIrtCalcDlg_btnBrowseDb_Click_Are_you_sure_you_want_to_open_a_new_database_file_Any_changes_to_the_current_calculator_will_be_lost,
-                    Program.Name, MessageBoxButtons.YesNo);
+                var result = MultiButtonMsgDlg.Show(this, Resources.EditIrtCalcDlg_btnBrowseDb_Click_Are_you_sure_you_want_to_open_a_new_database_file_Any_changes_to_the_current_calculator_will_be_lost,
+                    MessageBoxButtons.YesNo);
 
                 if (result != DialogResult.Yes)
                     return;
@@ -354,9 +354,9 @@ namespace pwiz.Skyline.SettingsUI.Irt
                 {
                     if (Equals(existingCalc.Name, textCalculatorName.Text) && !Equals(existingCalc.Name, _editingName))
                     {
-                        if (MessageBox.Show(this, string.Format(
+                        if (MultiButtonMsgDlg.Show(this, string.Format(
                                 Resources.EditIrtCalcDlg_OkDialog_A_calculator_with_the_name__0__already_exists_Do_you_want_to_overwrite_it,
-                                textCalculatorName.Text), Program.Name, MessageBoxButtons.YesNo) != DialogResult.Yes)
+                                textCalculatorName.Text), MessageBoxButtons.YesNo) != DialogResult.Yes)
                         {
                             textCalculatorName.Focus();
                             return;
@@ -408,7 +408,7 @@ namespace pwiz.Skyline.SettingsUI.Irt
             if (!string.Equals(Path.GetExtension(path), IrtDb.EXT) && !((chromLib || specLib) && !DatabaseChanged))
                 path += IrtDb.EXT;
 
-            //This function MessageBox.Show's error messages
+            //This function MessageDlg.Show's error messages
             if (!ValidatePeptideList(StandardPeptideList, Resources.EditIrtCalcDlg_OkDialog_standard_table_name))
             {
                 gridViewStandard.Focus();
@@ -810,7 +810,7 @@ namespace pwiz.Skyline.SettingsUI.Irt
                             irtAverages = ProcessRetentionTimes(monitor, GetRetentionTimeProviders(document).ToArray(), RegressionType));
                         if (status.IsError)
                         {
-                            MessageBox.Show(MessageParent, status.ErrorException.Message, Program.Name);
+                            MessageDlg.Show(MessageParent, status.ErrorException.Message);
                             return;
                         }
                     }
@@ -936,7 +936,7 @@ namespace pwiz.Skyline.SettingsUI.Irt
                             });
                             if (status.IsError)
                             {
-                                MessageBox.Show(MessageParent, status.ErrorException.Message, Program.Name);
+                                MessageDlg.Show(MessageParent, status.ErrorException.Message);
                                 return;
                             }
                         }
@@ -999,7 +999,7 @@ namespace pwiz.Skyline.SettingsUI.Irt
                         });
                         if (status.IsError)
                         {
-                            MessageBox.Show(MessageParent, status.ErrorException.Message, Program.Name);
+                            MessageDlg.Show(MessageParent, status.ErrorException.Message);
                             return;
                         }
                     }
@@ -1312,14 +1312,6 @@ namespace pwiz.Skyline.SettingsUI.Irt
             var selected = _driverStandards.SelectedItem;
             var lastIdx = _driverStandards.SelectedIndexLast;
 
-            if (ReferenceEquals(selected, IrtStandard.AUTO))
-            {
-                comboStandards.SelectedIndexChanged -= comboStandards_SelectedIndexChanged;
-                comboStandards.SelectedIndex = lastIdx;
-                comboStandards.SelectedIndexChanged += comboStandards_SelectedIndexChanged;
-                return;
-            }
-
             if (comboStandards.SelectedItem.ToString().Equals(Resources.SettingsListComboDriver_Edit_current) &&
                 IrtStandard.ALL.Any(standard => standard.Name.Equals(comboStandards.Items[lastIdx])))
             {
@@ -1396,20 +1388,24 @@ namespace pwiz.Skyline.SettingsUI.Irt
             var selectedItem = _driverStandards.SelectedItem;
             if (selectedItem != null)
             {
-                var selectedName = selectedItem.Name;
-                if (!BuiltinStandardSelected)
+                if (BuiltinStandardSelected)
+                {
+                    // A built-in standard is selected and standards have changed
+                    var newIdx = CurrentStandardIndex;
+                    if (newIdx == -1)
+                        newIdx = _driverStandards.List.IndexOf(standard => ReferenceEquals(standard, IrtStandard.EMPTY));
+                    if (newIdx != comboStandards.SelectedIndex)
+                    {
+                        comboStandards.SelectedIndexChanged -= comboStandards_SelectedIndexChanged;
+                        comboStandards.SelectedIndex = newIdx;
+                        _driverStandards.SelectedIndexChangedEvent(sender, null);
+                        comboStandards.SelectedIndexChanged += comboStandards_SelectedIndexChanged;
+                    }
+                }
+                else
                 {
                     // Update standard
                     _driverStandards.List[comboStandards.SelectedIndex] = _driverStandards.SelectedItem.ChangePeptides(StandardPeptides);
-                }
-                else if (selectedName.Equals(IrtStandard.EMPTY.Name))
-                {
-                    // Set ComboBox from None to the matching standard, if any
-                    var current = CurrentStandardIndex;
-                    if (current != -1)
-                    {
-                        comboStandards.SelectedIndex = current;
-                    }
                 }
             }
 

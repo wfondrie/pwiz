@@ -29,6 +29,7 @@ using pwiz.Skyline.Model.DocSettings;
 using pwiz.Skyline.Model.Lib;
 using pwiz.Skyline.Model.Results;
 using pwiz.Skyline.Model.Results.Scoring;
+using pwiz.Skyline.Model.RetentionTimes;
 using pwiz.Skyline.Properties;
 using pwiz.Skyline.Util;
 using pwiz.Skyline.Util.Extensions;
@@ -840,14 +841,9 @@ namespace pwiz.Skyline.Model
             }
             IPrecursorMassCalc massCalc = settings.GetPrecursorCalc(LabelType, mods);
             MoleculeMassOffset moleculeMassOffset = new MoleculeMassOffset(Molecule.Parse(massCalc.GetMolecularFormula(Peptide.Sequence)), 0, 0);
-            if (mods != null)
-            {
-                foreach (var crosslink in mods.Crosslinks)
-                {
-                    moleculeMassOffset = moleculeMassOffset.Plus(crosslink.Value.GetNeutralFormula(settings, LabelType));
-                }
-            }
-
+            moleculeMassOffset = moleculeMassOffset.Plus((mods?.CrosslinkStructure ?? CrosslinkStructure.EMPTY)
+                .GetNeutralFormula(settings, LabelType));
+            
             return moleculeMassOffset;
         }
 
@@ -1104,17 +1100,14 @@ namespace pwiz.Skyline.Model
         public IEnumerable<TransitionDocNode> GetTransitions(SrmSettings settings, ExplicitMods mods, double precursorMz,
             IsotopeDistInfo isotopeDist, SpectrumHeaderInfo libInfo, Dictionary<double, LibraryRankedSpectrumInfo.RankedMI> transitionRanks, bool useFilter)
         {
-            SrmSettings simpleFilterSettings = settings;
-            bool hasCrosslinks = mods != null && mods.HasCrosslinks;
-            var simpleTransitions = TransitionGroup.GetTransitions(simpleFilterSettings, this, mods, precursorMz, isotopeDist, libInfo, transitionRanks,
-                useFilter, !hasCrosslinks);
-            if (!hasCrosslinks)
+            if (mods == null || !mods.HasCrosslinks)
             {
-                return simpleTransitions;
+                return TransitionGroup.GetTransitions(settings, this, mods, precursorMz, isotopeDist, libInfo, transitionRanks,
+                    useFilter, true);
             }
             var crosslinkBuilder = new CrosslinkBuilder(settings, TransitionGroup.Peptide, mods, LabelType);
-            return crosslinkBuilder.GetComplexTransitions(TransitionGroup, precursorMz, isotopeDist, transitionRanks,
-                simpleTransitions, useFilter);
+            return crosslinkBuilder.GetTransitionDocNodes(TransitionGroup, precursorMz, isotopeDist, transitionRanks,
+                useFilter);
         }
 
         public DocNode EnsureChildren(PeptideDocNode parent, ExplicitMods mods, SrmSettings settings)
@@ -2382,10 +2375,8 @@ namespace pwiz.Skyline.Model
             private int TransitionCount { get; set; }
             private int PeakCount { get; set; }
             private int ResultsCount { get; set; }
-            private float MaxHeight { get; set; }
-            private float? RetentionTime { get; set; }
-            private float? StartTime { get; set; }
-            private float? EndTime { get; set; }
+            private RetentionTimeValues BestRetentionTimes { get; set; }
+            private RetentionTimeValues NonQuantitativeRetentionTimes { get; set; }
             private TransitionGroupIonMobilityInfo IonMobilityInfo { get; set; }
             private float? Fwhm { get; set; }
             private float? Area { get; set; }
@@ -2435,8 +2426,8 @@ namespace pwiz.Skyline.Model
                 {
                     if (info.IsGoodPeak(Settings.TransitionSettings.Integration.IsIntegrateAll))
                         PeakCount++;
-                    
-                    if (nodeTran.ExplicitQuantitative)
+                    var retentionTimeValues = RetentionTimeValues.FromTransitionChromInfo(info);
+                    if (nodeTran.IsQuantitative(Settings))
                     {
                         Area = (Area ?? 0) + info.Area;
                         BackgroundArea = (BackgroundArea ?? 0) + info.BackgroundArea;
@@ -2446,16 +2437,8 @@ namespace pwiz.Skyline.Model
                             massError += (info.MassError.Value - massError) * info.Area / Area.Value;
                             MassError = (float)massError;
                         }
-                        if (info.Height > MaxHeight)
-                        {
-                            MaxHeight = info.Height;
-                            RetentionTime = info.RetentionTime;
-                        }
-                        else if(!RetentionTime.HasValue && info.Height >= MaxHeight)
-                        {
-                            MaxHeight = info.Height;
-                            RetentionTime = (info.StartRetentionTime + info.EndRetentionTime) / 2;
-                        }
+
+                        BestRetentionTimes = RetentionTimeValues.Merge(BestRetentionTimes, retentionTimeValues);
                         if (!info.IsFwhmDegenerate)
                             Fwhm = Math.Max(info.Fwhm, Fwhm ?? float.MinValue);
                         if (info.IsTruncated.HasValue)
@@ -2476,10 +2459,10 @@ namespace pwiz.Skyline.Model
                                 BackgroundAreaFragment = (BackgroundAreaFragment ?? 0) + info.BackgroundArea;
                                 break;
                         }
-                        if (info.StartRetentionTime != 0)
-                            StartTime = Math.Min(info.StartRetentionTime, StartTime ?? float.MaxValue);
-                        if (info.EndRetentionTime != 0)
-                            EndTime = Math.Max(info.EndRetentionTime, EndTime ?? float.MinValue);
+                    }
+                    else
+                    {
+                        NonQuantitativeRetentionTimes = RetentionTimeValues.Merge(NonQuantitativeRetentionTimes, retentionTimeValues);
                     }
 
                     if (info.IsIdentified &&
@@ -2537,17 +2520,19 @@ namespace pwiz.Skyline.Model
                         qValue = (float)ExplicitPeakBounds.Score;
                     }
                 }
+
+                var retentionTimeValues = BestRetentionTimes ?? NonQuantitativeRetentionTimes;
                 return new TransitionGroupChromInfo(FileId,
                                                     OptimizationStep,
                                                     PeakCountRatio,
-                                                    RetentionTime,
-                                                    StartTime,
-                                                    EndTime,
+                                                    (float?) retentionTimeValues?.RetentionTime,
+                                                    (float?) retentionTimeValues?.StartRetentionTime,
+                                                    (float?) retentionTimeValues?.EndRetentionTime,
                                                     IonMobilityInfo,
                                                     Fwhm,
                                                     Area, AreaMs1, AreaFragment,
                                                     BackgroundArea, BackgroundAreaMs1, BackgroundAreaFragment,
-                                                    MaxHeight,
+                                                    (float?) BestRetentionTimes?.Height,
                                                     Ratios,
                                                     MassError,
                                                     Truncated,
