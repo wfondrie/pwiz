@@ -3,7 +3,7 @@ set -e
 cd "$(dirname "$0")"
 
 # The Boost version to download:
-boost_version=1.75.0
+boost_version=1.76.0
 
 # Create a temporary directory to work in:
 tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
@@ -13,7 +13,7 @@ cd ${tmp_dir}
 base=boost_$(tr "." "_" <<< ${boost_version})
 
 echo "Downloading Boost tarball..." > /dev/stderr
-curl -0L https://dl.bintray.com/boostorg/release/${boost_version}/source/${base}.tar.bz2 \
+curl -0L https://boostorg.jfrog.io/artifactory/main/release/${boost_version}/source/${base}.tar.bz2 \
      -o ${base}.tar.bz2
 
 echo "Unpacking Boost tarball..." > /dev/stderr
